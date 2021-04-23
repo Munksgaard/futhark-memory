@@ -19,12 +19,12 @@ all: $(MASTER_JSON) $(MEM_JSON)
 
 bin/futhark-master:
 	mkdir -p bin
-	cd futhark && git checkout $(FUTHARK_MASTER_SHA) && cabal install --install-method=copy  --overwrite-policy=always --installdir=../bin
+	cd futhark && git checkout $(FUTHARK_MASTER_SHA) && stack --local-bin-path ../bin install
 	mv bin/futhark $@
 
 bin/futhark-mem:
 	mkdir -p bin
-	cd futhark && git checkout $(FUTHARK_MEM_SHA) && cabal install --install-method=copy  --overwrite-policy=always --installdir=../bin
+	cd futhark && git checkout $(FUTHARK_MEM_SHA) && stack --local-bin-path ../bin install
 	mv bin/futhark $@
 
 .PRECIOUS: results-$(HOST)/%.tuning
