@@ -1,5 +1,7 @@
 LocVolCalib
 LocVolCalib.c
+LocVolCalib32
+LocVolCalib32.c
 bfast
 bfast.c
 *.actual
