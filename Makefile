@@ -1,4 +1,4 @@
-.PHONY: all clean
+.PHONY: all clean clean-all
 
 HOST ?= gpu04
 
@@ -27,10 +27,10 @@ bin/futhark-mem:
 	cd futhark && git checkout $(FUTHARK_MEM_SHA) && stack --local-bin-path ../bin install
 	mv bin/futhark $@
 
-.PRECIOUS: results-$(HOST)/%.tuning
+.PRECIOUS: tunings-$(HOST)/%-mem.tuning tunings-$(HOST)/%-master.tuning
 
-results-$(HOST)/%-mem.tuning: benchmarks/%.fut $(FUTHARK_MEM_BIN)
-	mkdir -p results-$(HOST)
+tunings-$(HOST)/%-mem.tuning: benchmarks/%.fut $(FUTHARK_MEM_BIN)
+	mkdir -p tunings-$(HOST)
 	$(FUTHARK_MEM_BIN) autotune \
 	  --backend=opencl \
 	  --pass-option=--default-tile-size=8 \
@@ -38,8 +38,8 @@ results-$(HOST)/%-mem.tuning: benchmarks/%.fut $(FUTHARK_MEM_BIN)
 	  $<
 	mv $<.tuning $@
 
-results-$(HOST)/%-master.tuning: benchmarks/%.fut $(FUTHARK_MASTER_BIN)
-	mkdir -p results-$(HOST)
+tunings-$(HOST)/%-master.tuning: benchmarks/%.fut $(FUTHARK_MASTER_BIN)
+	mkdir -p tunings-$(HOST)
 	$(FUTHARK_MASTER_BIN) autotune \
 	  --backend=opencl \
 	  --pass-option=--default-tile-size=8 \
@@ -47,7 +47,7 @@ results-$(HOST)/%-master.tuning: benchmarks/%.fut $(FUTHARK_MASTER_BIN)
 	  $<
 	mv $<.tuning $@
 
-results-$(HOST)/%-mem.json: results-$(HOST)/%-mem.tuning benchmarks/%.fut $(FUTHARK_MEM_BIN)
+results-$(HOST)/%-mem.json: tunings-$(HOST)/%-mem.tuning benchmarks/%.fut $(FUTHARK_MEM_BIN)
 	mkdir -p results-$(HOST)
 	$(FUTHARK_MEM_BIN) bench \
 	  --backend=opencl \
@@ -58,7 +58,7 @@ results-$(HOST)/%-mem.json: results-$(HOST)/%-mem.tuning benchmarks/%.fut $(FUTH
 	  $$(python tools/tuning_to_options.py < $<) \
 	  benchmarks/$*.fut
 
-results-$(HOST)/%-master.json: results-$(HOST)/%-master.tuning benchmarks/%.fut $(FUTHARK_MASTER_BIN)
+results-$(HOST)/%-master.json: tunings-$(HOST)/%-master.tuning benchmarks/%.fut $(FUTHARK_MASTER_BIN)
 	mkdir -p results-$(HOST)
 	$(FUTHARK_MASTER_BIN) bench \
 	  --backend=opencl \
@@ -70,4 +70,7 @@ results-$(HOST)/%-master.json: results-$(HOST)/%-master.tuning benchmarks/%.fut 
 	  benchmarks/$*.fut
 
 clean:
-	rm -rf bin results-$(HOST)
+	rm -rf results-$(HOST)
+
+clean-all: clean
+	rm -rf tunings-$(HOST) bin
