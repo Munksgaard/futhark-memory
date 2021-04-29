@@ -4,5 +4,15 @@ LocVolCalib32
 LocVolCalib32.c
 bfast
 bfast.c
+bfast64
+bfast64.c
+OptionPricing
+OptionPricing.c
+OptionPricing64
+OptionPricing64.c
+ocean-sim
+ocean-sim.c
+ocean-sim64
+ocean-sim64.c
 *.actual
 *.expected
