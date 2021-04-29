@@ -19,17 +19,19 @@ all: $(MASTER_JSON) $(MEM_JSON)
 
 bin/futhark-master:
 	mkdir -p bin
-	cd futhark && git checkout $(FUTHARK_MASTER_SHA) && stack --local-bin-path ../bin install
-	mv bin/futhark $@
+	cd futhark && git checkout $(FUTHARK_MASTER_SHA) && nix-build
+	tar xvf futhark/result/futhark-nightly.tar.xz -O futhark-nightly/bin/futhark  > $@
+	chmod +x $@
 
 bin/futhark-mem:
 	mkdir -p bin
-	cd futhark && git checkout $(FUTHARK_MEM_SHA) && stack --local-bin-path ../bin install
-	mv bin/futhark $@
+	cd futhark && git checkout $(FUTHARK_MASTER_SHA) && nix-build
+	tar xvf futhark/result/futhark-nightly.tar.xz -O futhark-nightly/bin/futhark  > $@
+	chmod +x $@
 
 .PRECIOUS: tunings-$(HOST)/%-mem.tuning tunings-$(HOST)/%-master.tuning
 
-tunings-$(HOST)/%-mem.tuning: benchmarks/%.fut $(FUTHARK_MEM_BIN)
+tunings-$(HOST)/%-mem.tuning: benchmarks/%.fut
 	mkdir -p tunings-$(HOST)
 	$(FUTHARK_MEM_BIN) autotune \
 	  --backend=opencl \
@@ -38,7 +40,7 @@ tunings-$(HOST)/%-mem.tuning: benchmarks/%.fut $(FUTHARK_MEM_BIN)
 	  $<
 	mv $<.tuning $@
 
-tunings-$(HOST)/%-master.tuning: benchmarks/%.fut $(FUTHARK_MASTER_BIN)
+tunings-$(HOST)/%-master.tuning: benchmarks/%.fut
 	mkdir -p tunings-$(HOST)
 	$(FUTHARK_MASTER_BIN) autotune \
 	  --backend=opencl \
@@ -47,7 +49,7 @@ tunings-$(HOST)/%-master.tuning: benchmarks/%.fut $(FUTHARK_MASTER_BIN)
 	  $<
 	mv $<.tuning $@
 
-results-$(HOST)/%-mem.json: tunings-$(HOST)/%-mem.tuning benchmarks/%.fut $(FUTHARK_MEM_BIN)
+results-$(HOST)/%-mem.json: tunings-$(HOST)/%-mem.tuning benchmarks/%.fut
 	mkdir -p results-$(HOST)
 	$(FUTHARK_MEM_BIN) bench \
 	  --backend=opencl \
@@ -58,7 +60,7 @@ results-$(HOST)/%-mem.json: tunings-$(HOST)/%-mem.tuning benchmarks/%.fut $(FUTH
 	  $$(python tools/tuning_to_options.py < $<) \
 	  benchmarks/$*.fut
 
-results-$(HOST)/%-master.json: tunings-$(HOST)/%-master.tuning benchmarks/%.fut $(FUTHARK_MASTER_BIN)
+results-$(HOST)/%-master.json: tunings-$(HOST)/%-master.tuning benchmarks/%.fut
 	mkdir -p results-$(HOST)
 	$(FUTHARK_MASTER_BIN) bench \
 	  --backend=opencl \
