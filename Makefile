@@ -37,6 +37,7 @@ tunings-$(HOST)/%-mem.tuning: benchmarks/%.fut
 	  --backend=opencl \
 	  --pass-option=--default-tile-size=8 \
 	  --pass-option=--default-reg-tile-size=3 \
+          --runs=500 \
 	  $<
 	mv $<.tuning $@
 
@@ -46,6 +47,7 @@ tunings-$(HOST)/%-master.tuning: benchmarks/%.fut
 	  --backend=opencl \
 	  --pass-option=--default-tile-size=8 \
 	  --pass-option=--default-reg-tile-size=3 \
+          --runs=500 \
 	  $<
 	mv $<.tuning $@
 
@@ -55,7 +57,7 @@ results-$(HOST)/%-mem.json: tunings-$(HOST)/%-mem.tuning benchmarks/%.fut
 	  --backend=opencl \
 	  --pass-option=--default-tile-size=8 \
 	  --pass-option=--default-reg-tile-size=3 \
-          --runs=10 \
+          --runs=500 \
 	  --json $@ \
 	  $$(python tools/tuning_to_options.py < $<) \
 	  benchmarks/$*.fut
@@ -66,7 +68,7 @@ results-$(HOST)/%-master.json: tunings-$(HOST)/%-master.tuning benchmarks/%.fut
 	  --backend=opencl \
 	  --pass-option=--default-tile-size=8 \
 	  --pass-option=--default-reg-tile-size=3 \
-          --runs=10 \
+          --runs=500 \
 	  --json $@ \
 	  $$(python tools/tuning_to_options.py < $<) \
 	  benchmarks/$*.fut
