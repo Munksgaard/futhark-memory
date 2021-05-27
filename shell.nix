@@ -4,7 +4,7 @@ let
   futhark_shell = import ./futhark/shell.nix;
 in
 
-let pythonEnv = (pkgs.python27.withPackages (ps: [
+let pythonEnv = (pkgs.python37.withPackages (ps: [
       ps.numpy
       ps.matplotlib
     ])).override (args: { ignoreCollisions = true; });
