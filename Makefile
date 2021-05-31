@@ -2,6 +2,8 @@
 
 HOST ?= gpu04
 
+PYTHON ?= python3
+
 FUTHARK_MASTER_SHA ?= c323a902640a92cb9ba23eb484e7948eb64a9403
 FUTHARK_MEM_SHA ?= 520a821d04aaa251922a5a9fbf0e692885854f7e
 
@@ -59,7 +61,7 @@ results-$(HOST)/%-mem.json: tunings-$(HOST)/%-mem.tuning benchmarks/%.fut
 	  --pass-option=--default-reg-tile-size=3 \
           --runs=500 \
 	  --json $@ \
-	  $$(python tools/tuning_to_options.py < $<) \
+	  $$($(PYTHON) tools/tuning_to_options.py < $<) \
 	  benchmarks/$*.fut
 
 results-$(HOST)/%-master.json: tunings-$(HOST)/%-master.tuning benchmarks/%.fut
@@ -70,7 +72,7 @@ results-$(HOST)/%-master.json: tunings-$(HOST)/%-master.tuning benchmarks/%.fut
 	  --pass-option=--default-reg-tile-size=3 \
           --runs=500 \
 	  --json $@ \
-	  $$(python tools/tuning_to_options.py < $<) \
+	  $$($(PYTHON) tools/tuning_to_options.py < $<) \
 	  benchmarks/$*.fut
 
 clean:
