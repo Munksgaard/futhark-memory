@@ -10,14 +10,17 @@ FUTHARK_MEM_SHA ?= 520a821d04aaa251922a5a9fbf0e692885854f7e
 FUTHARK_MASTER_BIN ?= bin/futhark-master
 FUTHARK_MEM_BIN ?= bin/futhark-mem
 
-BENCHMARKS = LocVolCalib LocVolCalib32 bfast bfast64 ocean-sim ocean-sim64 OptionPricing OptionPricing64
+BENCHMARKS = LocVolCalib LocVolCalib32 bfast ocean-sim ocean-sim64 OptionPricing OptionPricing64
 
 BENCHMARK_TARGETS = $(BENCHMARKS:%=benchmarks/%.fut)
 
 MASTER_JSON = $(BENCHMARKS:%=results-$(HOST)/%-master.json)
 MEM_JSON = $(BENCHMARKS:%=results-$(HOST)/%-mem.json)
 
-all: $(MASTER_JSON) $(MEM_JSON)
+all: benchmarks/lib $(MASTER_JSON) $(MEM_JSON)
+
+benchmarks/lib:
+	cd benchmarks && futhark pkg sync
 
 bin/futhark-master:
 	mkdir -p bin
