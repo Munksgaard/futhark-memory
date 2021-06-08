@@ -27,7 +27,7 @@ bin/futhark-master:
 
 bin/futhark-mem:
 	mkdir -p bin
-	cd futhark && git checkout $(FUTHARK_MASTER_SHA) && nix-build
+	cd futhark && git checkout $(FUTHARK_MEM_SHA) && nix-build
 	tar xvf futhark/result/futhark-nightly.tar.xz -O futhark-nightly/bin/futhark  > $@
 	chmod +x $@
 
