@@ -1,10 +1,10 @@
 -- LocVolCalib
 -- ==
--- compiled input @ LocVolCalib32-data/small.in
+-- compiled input @ LocVolCalib-data/small.in
 --
--- compiled input @ LocVolCalib32-data/medium.in
+-- compiled input @ LocVolCalib-data/medium.in
 --
--- compiled input @ LocVolCalib32-data/large.in
+-- compiled input @ LocVolCalib-data/large.in
 
 let initGrid (s0: f32) (alpha: f32) (nu: f32) (t: f32) (numX: i64) (numY: i64) (numT: i64)
   : (i32, i32, [numX]f32, [numY]f32, [numT]f32) =

@@ -1,9 +1,9 @@
 -- BFAST-irregular: version handling obscured observations (e.g., clouds)
 -- ==
--- compiled input @ bfast64-data/peru.in.gz
--- noopentune compiled input @ bfast64-data/africa.in.gz
+-- compiled input @ bfast-data/peru.in.gz
+-- noopentune compiled input @ bfast-data/africa.in.gz
 
--- compiled input @ bfast64-data/sahara.in.gz
+-- compiled input @ bfast-data/sahara.in.gz
 -- africa does not run with the large default threshold
 
 
