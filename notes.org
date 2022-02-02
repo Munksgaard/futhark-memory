@@ -1,0 +1,526 @@
+#+options: ':nil *:t -:t ::t <:t H:3 \n:nil ^:t arch:headline author:t
+#+options: broken-links:nil c:nil creator:nil d:(not "LOGBOOK") date:t e:t
+#+options: email:nil f:t inline:t num:t p:nil pri:nil prop:nil stat:t tags:t
+#+options: tasks:t tex:t timestamp:t title:t toc:t todo:t |:t
+#+title: Notes on memory coalescing in Futhark
+#+date: <2021-08-27 Fri>
+#+author: Philip Munksgaard
+#+email: philip@munksgaard.me
+#+language: en
+#+select_tags: export
+#+exclude_tags: noexport
+#+creator: Emacs 27.2 (Org mode 9.4.4)
+
+
+* Coalescing NW
+
+** The problem
+
+After rewriting ~nw.fut~ to use flat slices, the code looks like this:
+
+#+begin_src futhark -n -r -l "-- ref:%s"
+  import "intrinsics"
+
+  let mkVal [bp1][b] (y:i32) (x:i32) (pen:i32) (block:[bp1][bp1]i32) (ref:[b][b]i32) : i32 =
+    #[unsafe]
+    i32.max (block[y, x - 1] - pen) (block[y - 1, x] - pen)
+    |> i32.max (block[y - 1, x - 1] + ref[y - 1, x - 1])
+
+
+  let process_block [b][bp1]
+                    (penalty: i32)
+                    (block: [bp1][bp1]i32)
+                    (ref: [b][b]i32): *[b][b]i32 =
+    -- Process the first half (anti-diagonally) of the block
+    let block =
+      loop block = copy block for m < b do
+         let inds =
+              tabulate b (\tx ->
+                            if tx > m then (-1, -1)
+                            else let ind_x = i32.i64 (tx + 1)
+                                 let ind_y = i32.i64 (m - tx + 1)
+                                 in (i64.i32 ind_y, i64.i32 ind_x))
+          let vals =
+              -- tabulate over the m'th anti-diagonal before the middle
+              tabulate b
+                       (\tx ->
+                          if tx > m then 0
+                          else let ind_x = i32.i64 (tx + 1)
+                               let ind_y = i32.i64 (m - tx + 1)
+                               let v = mkVal ind_y ind_x penalty block ref
+                               in v)
+          in scatter_2d block inds vals
+
+    -- Same, but for lower half anti-diagonal
+
+    in block[1:, 1:] :> [b][b]i32
+
+  entry nw_flat [n]
+                (block_size: i64)
+                (penalty: i32)
+                (input: *[n]i32)
+                (refs: [n]i32)
+                : *[n]i32 =
+    let row_length = i64.f64 <| f64.sqrt <| f64.i64 n
+    let num_blocks = -- assert ((row_length - 1) % b == 0) <|
+                     (row_length - 1) / block_size
+    let bp1 = block_size + 1
+
+    let input =
+      loop input for i < num_blocks do
+      let ip1 = i + 1
+      let v =
+        #[incremental_flattening(only_intra)]
+        map2 (process_block penalty)
+        (flat_index_3d input (i * block_size)
+                       ip1 (row_length * block_size - block_size)
+                       bp1 row_length
+                       bp1 1i64)
+        (flat_index_3d refs (row_length + 1 + i * block_size)
+                       ip1 (row_length * block_size - block_size)
+                       block_size row_length
+                       block_size 1i64)
+      in flat_update_3d
+           input
+           (row_length + 1 + i * block_size)
+           (row_length * block_size - block_size)
+           (row_length)
+           1
+           v
+
+      -- Same, but for lower half anti-diagonal
+
+    in input
+#+end_src
+
+Now, the question is, what will it take for our memory coalescing analysis to
+realize that the result of ~process_block~ can be written directly into the same
+memory as ~input~, making it possible to optimize the ~flat_update~ away and avoid
+allocating an extra buffer for the result of the ~map2~.
+
+Let's take a look at the produced IR, the generated index functions, and see if
+we can figure out what it would take for our analyzer to determine that.
+
+First of all, the requirement is that merging the two memory blocks should not
+cause any read-after-write failures. In other words, after merging the two
+memory blocks, if a location in ~process_block~ is written, that same projection
+in ~input~ should not be read later on. As an example, let's take a look at a
+simplified version of the ~SeqMem~ IR for the code above. Here, ~b~ is the block
+size, ~r~ is the row length and ~n~ is the total number of elements. We assume
+~n~ is a square.
+
+#+begin_src futhark -n -r -l "-- ref:%s"
+  let nw(b: i64, n: i64, input_mem: mem, input: [n]i32 @ input_mem) =
+    let r = sqrt n
+    let num_blocks = ...
+    in loop input for i < num_blocks do
+      let flat: [i+1][b+1][b+1]@input_mem = input[i * b; i+1 : r*b-b, b+1 : r, b+1 : 1]
+      let defunc_mem = alloc ...
+      let defunc: [i+1][b][b]@defunc_mem = scratch
+      let defunc = loop defunc for j < i + 1 do
+        -- Corresponds to process_block
+        let buf_mem = alloc
+        let buf: buf_mem[b+1][b+1]@buf_mem = copy flat_index[j, :, :] -- ref:flat-read
+        -- Some processing
+        let defunc[j, :, :] = buf[1:, 1:]                     -- ref:defunc-write
+        in defunc
+      in input[r+1+i*b; i+1 : r*b-b, b:r, b:1] = defunc
+#+end_src
+
+From inspecting this manually, we can determine that it would be safe to
+allocate ~defunc~ directly in ~input_mem~, because every time we write ~defunc~
+into ~input~, we never read that location again.
+
+#+begin_src artist
+  +-----+---+
+  |     |   |
+  |     | 1 |
+  |  +--++  |
+  |  |+-++--+
+  |  ||..|  |
+  +--++..|  |
+  |  ++--+  |
+  | 2 |     |
+  |   |     |
+  +---+-----+
+#+end_src
+
+This is a diagram of the anti-diagonal read-write pattern of NW. The three big
+squares that overlap in one corner are the blocks being read and processed by
+~process_block~. The little square marked with ~.~ is one of the blocks being
+written after ~process_block~ has run. Similar squares would be written in the
+two big squares marked ~1~ and ~2~. From inspecting this diagram, we can see
+that the written blocks of each iteration of the inner loop does not overlap
+with any reads in later iterations of that same loop.
+
+Can we formalize this argument in a way such that the memory-coalescing analysis
+is able to reach the same conclusion? Yes, by examining the index functions and
+checking for any overlaps.
+
+** The index functions
+
+In the example above, assume we are in iteration $j$ of the inner loop. We have
+a write on line [[(defunc-write)]] and we want to determine if the index function of
+that write (if it were projected to ~input_mem~) overlaps with the index
+function of the read on line [[(flat-read)]] /in the next iteration/.
+
+The index function of line [[(defunc-write)]] in iteration $j$ is:
+
+\begin{equation}
+j * b * b + \{b, 1\} \vee \{b, b\}
+\end{equation}
+
+The first bit is the offset, followed by the strides of the different dimensions
+and finally the spans.
+
+If we project the slice onto ~input_mem~, the index function is
+
+\begin{equation}
+r + 1 + i * b + j(r * b- b) + \{r, 1\}, \vee \{b, b\}
+\end{equation}
+
+The index function of the read on line [[(flat-read)]] in iteration $j+1$ is
+
+\begin{equation}
+i * b + (j + 1) * (r * b - b) + \{r, 1\} \vee \{b+1, b+1\}
+\end{equation}
+
+** One-dimensional LMAD overlap
+
+In section 3.2 of the paper [[https://dl.acm.org/doi/pdf/10.1145/2254064.2254124][Logical inference techniques for loop
+parallelization]], it is described how we can determine if two one-dimensional
+LMADs are disjoint: Either they correspond to interleaved but non-overlapping
+accesses, or they can be "over-estimated" by disjoint intervals. For instance, an
+LMAD with offset 0 and stride 2 and an LMAD with offset 1 and stride 4 would
+be interleaved, but never access the same memory location. Similarly, an LMAD
+with offset 0 and total span (span * stride) 100 will never overlap with an LMAD
+with offset 200 and a positive stride. Formally, for two LMADS $\tau_1 +
+\{\delta_1\} \vee \{\sigma_1\}$ and $\tau_2 + \{\delta_2\} \vee \{\sigma_2\}$ to
+be disjoint the following needs to hold:
+
+\begin{equation}
+(gcd(\delta_1, \delta_2) \nmid \tau_1 - \tau_2) \vee (\tau_1 > \tau_2 + \sigma_2 \vee \tau_2 > \tau_1 + \sigma_1)
+\end{equation}
+
+where $\nmid$ means /does not divide/.
+
+The question is, how do we generalize this to two-dimensional LMADs, like the
+ones found in NW.
+
+** Over-estimate flattened LMADs
+
+One way to handle LMADs with higher-dimensionality is to try to flatten
+them. Unfortunately, not all higher-dimensional LMADs can be flattened to one
+dimension. For instance, the anti-diagonal pattern from NW cannot be represented
+by a one-dimensional LMAD. Instead, we can try to over-estimate the flattened
+LMAD. We do so by finding the flat span of the LMAD and filling it with the
+greatest common divisor of the strides:
+
+#+begin_src haskell -n -r -l "-- ref:%s"
+-- | Computes the maximum span of an 'LMAD'. The result is the lowest and
+-- highest flat values representable by that 'LMAD'.
+flatSpan :: (IntegralExp e, Ord e) => LMAD e -> (e, e)
+flatSpan (LMAD ofs dims) =
+  foldl helper (ofs, ofs) dims
+  where
+    helper (lower, upper) dim =
+      let spn = ldStride dim * (ldShape dim - 1)
+       in ( min (spn + lower) lower,
+            max (spn + upper) upper
+          )
+
+-- | Conservatively flatten a list of LMAD dimensions
+--
+-- Since not all LMADs can actually be flattened, we try to overestimate the
+-- flattened array instead. This means that any "holes" in betwen dimensions
+-- will get filled out.
+conservativeFlatten :: (IntegralExp e, Ord e) => LMAD e -> LMAD e
+conservativeFlatten l@(LMAD _ dims) =
+  LMAD offset [LMADDim strd 0 (shp + 1) 0 Unknown]
+  where
+    strd = foldl1 Futhark.Util.IntegralExp.gcd $ map ldStride dims
+    (offset, shp) = flatSpan l
+#+end_src
+
+For extremely simple cases, this works. But not for NW and most other
+interesting cases, it doesn't. For NW, the flattened LMAD of the square denoted
+2 in the diagram above, would overlap with the last row of the square we're
+trying to write. So we need something more sophisticated. If we focus only on
+two-dimensional LMADs, perhaps we can do better?
+
+** Simplified two-dimensional LMAD overlaps
+
+Okay, so how can we determine if two two-dimensional LMADs are disjoint? Let's
+ignore the interleaved access for now, and focus on disjoint intervals, because
+that's what we need for NW.
+
+#+CAPTION: Two squares
+#+NAME: fig:two-squares
+#+begin_src artist
+  +--------------+
+  |              |
+  |              |
+  |       +---+  |
+  |       |   |  |
+  |       | b |  |
+  |       |   |  |
+  |       +---+  |
+  | +----+       |
+  | |    |       |
+  | | a  |       |
+  | |    |       |
+  | |    |       |
+  | +----+       |
+  |              |
+  +--------------+
+#+end_src
+
+Let's take these two squares as examples. Square a has the LMAD $\tau^a +
+\{\delta^a_1, \delta^a_2\} \vee \{\sigma^a_1, \sigma^a_2\}$, while square b has
+the LMAD $\tau^b + \{\delta^b_1, \delta^b_2\} \vee \{\sigma^b_1,
+\sigma^b_2\}$. For simplification's sake, let's assume for now that the strides are pairwise equal and
+strictly positive.
+
+One case for which the two LMADs will be disjoint, is if square a is entirely
+"below" square b. In the diagram above, we can see that a is indeed
+below b. We can express this by the equation:
+
+\begin{equation}
+\tau^a >= \tau^b + \delta^b_1 * \sigma^b_1 + \delta^b_2 * \sigma^b_2
+\end{equation}
+
+Inserting the projected index function of the write on line [[(defunc-write)]], we get:
+
+\begin{equation}
+r + 1 + i * b + j(r * b- b) + \{r, 1\}, \vee \{b, b\}
+\end{equation}
+
+The index function of the read on line [[(flat-read)]] in iteration $j+1$ is
+
+\begin{equation}
+i * b + (j + 1) * (r * b - b) + \{r, 1\} \vee \{b+1, b+1\}
+\end{equation}
+
+
+Let's try to solve the inequality:
+
+\begin{align}
+i b + (j + 1) (r b - b) &>= r + 1 + i b + j(r b- b) + r b + b \\
+i b + (j + 1) * (r b - b) - (r + i b + j(r b- b) + r b + b) &>= 1 \\
+i b + (j + 1) * (r b - b) - r - i b - j(r b- b) - r b - b &>= 1 \\
+i b + j r b - j b + r b - b - r - i b - j r b + j b - r b - b &>= 1 \\
+- b - r - b &>= 1 \\
+\end{align}
+
+Since we require both block-size and row-size to be positive, this cannot hold.
+
+Actually, to see if we're on the right track, let's try it again with the LMADs
+in Figure [[fig:two-squares]]. Square a has LMAD
+
+\begin{equation}
+8*13+2 + \{13, 1\} \vee \{4, 4\}
+\end{equation}
+
+Square b has LMAD
+
+\begin{equation}
+3*13+8 + \{13, 1\} \vee \{3, 3\}
+\end{equation}
+
+We try to insert:
+
+\begin{align}
+8*13+2 &>= 3*13+8 + 13 * 3 + 3 \\
+8*13+2 - (3*13+8 + 13 * 3 + 3) &>= 0 \\
+8*13+2 - 3*13 -8 - 13 * 3 - 3 &>= 0 \\
+104+2 - 39 -8 - 39 - 3 &>= 0 \\
+106 - 88 &>= 0 \\
+18 &>= 0 \\
+\end{align}
+
+It works!
+
+So now we can determine if two LMADs are vertically disjoint. Unfortunately,
+that doesn't work for our NW-case because the blocks are not vertically
+disjoint. However, it should work for checking if a write block is disjoint from
+the read block of a /previous/ iteration of the loop.
+
+So let's try to see if we can determine if square a is "to the left of" square
+b.
+
+\begin{equation}
+\tau^b \bmod \sigma^b_1 >= \tau^a \bmod \sigma^a_1 + \delta^a_2 * \sigma^a_2
+\end{equation}
+
+
+** Cosmins plan
+
+Abort! Abort!
+
+I think the above might work, but Cosmin has another, better, plan.
+
+
+Let's start from the beginning with the new ~nw-cosmin.fut~:
+
+#+begin_src futhark -n -r -l "-- ref:%s"
+  import "intrinsics"
+
+  let mkVal [bp1][b] (y:i32) (x:i32) (pen:i32) (block:[bp1][bp1]i32) (ref:[b][b]i32) : i32 =
+    #[unsafe]
+    i32.max (block[y, x - 1] - pen) (block[y - 1, x] - pen)
+    |> i32.max (block[y - 1, x - 1] + ref[y - 1, x - 1])
+
+  let process_block [b][bp1]
+                    (penalty: i32)
+                    (above: [bp1]i32)
+                    (left: [b]i32)
+                    (ref: [b][b]i32): *[b][b]i32 =
+    let block = assert (b + 1 == bp1) (tabulate_2d bp1 bp1 (\_ _ -> 0))
+    let block[0, 0:] = above
+    let block[1:, 0] = left
+
+    -- Process the first half (anti-diagonally) of the block
+    let block =
+      loop block for m < b do
+         let inds =
+              tabulate b (\tx ->
+                            if tx > m then (-1, -1)
+                            else let ind_x = i32.i64 (tx + 1)
+                                 let ind_y = i32.i64 (m - tx + 1)
+                                 in (i64.i32 ind_y, i64.i32 ind_x))
+          let vals =
+              -- tabulate over the m'th anti-diagonal before the middle
+              tabulate b
+                       (\tx ->
+                          if tx > m then 0
+                          else let ind_x = i32.i64 (tx + 1)
+                               let ind_y = i32.i64 (m - tx + 1)
+                               let v = mkVal ind_y ind_x penalty block ref
+                               in v)
+          in scatter_2d block inds vals
+
+      -- Same, but for lower half anti-diagonal
+
+    in block[1:, 1:] :> [b][b]i32
+
+  entry nw_flat [n]
+                (block_size: i64)
+                (penalty: i32)
+                (input: *[n]i32)
+                (refs: [n]i32)
+                : *[n]i32 =
+    let row_length = i64.f64 <| f64.sqrt <| f64.i64 n
+    let num_blocks = -- assert ((row_length - 1) % b == 0) <|
+                     (row_length - 1) / block_size
+    let bp1 = block_size + 1
+
+    let input =
+      loop input for i < num_blocks do
+      let ip1 = i + 1
+      let v =
+        #[incremental_flattening(only_intra)]
+        map3 (process_block penalty)
+        (flat_index_2d input (i * block_size)
+                       ip1 (row_length * block_size - block_size)
+                       bp1 1)
+        (flat_index_2d input (row_length + i * block_size)
+                       ip1 (row_length * block_size - block_size)
+                       block_size row_length)
+        (flat_index_3d refs (row_length + 1 + i * block_size)
+                       ip1 (row_length * block_size - block_size)
+                       block_size row_length
+                       block_size 1i64)
+      in flat_update_3d
+           input
+           (row_length + 1 + i * block_size)
+           (row_length * block_size - block_size)
+           (row_length)
+           1
+           v
+
+      -- Same, but for lower half anti-diagonal
+
+    in input
+#+end_src
+
+This code is slightly different from before. Instead of passing in the entire
+~[b+1][b+1]~ block, we only pass in the perimeters (upper and left) of size
+~b+1~ and ~b~ (only one needs to have the corner), as those are the only values
+that are actually read. Then, we create an ~[b+1][b+1]~ in-memory buffer inside
+~process_block~ to do the actual processing. At the end, only the computed
+~[b][b]~ block is returned. The trick is that we want to do all of the
+~process_block~ processing in shared memory, because it's fast, but return
+directly into the input memory.
+
+Let's again take a look at the simplified IR code in question:
+
+#+begin_src futhark -n -r -l "-- ref:%s"
+  let nw (b: i64, n: i64, input_mem: mem, input: [n]i32 @ input_mem) =
+    let r = sqrt n
+    let num_blocks = ...
+    in loop input for i < num_blocks do
+      let upper_peri: [i+1][b+1]@input_mem = input[i*b; i+1 : r*b-b, b+1 : 1]
+      let left_peri: [i+1][b]@input_mem = input[r+i*b; i+1 : r*b-b, b+1 : r]
+      let defunc_mem
+#+end_src
+
+* Benchmarks to use
+
+** LUD
+
+10% on A100, 25% with larger dataset
+
+*** TODO How does it compare to the rodinia runtime?
+
+*** TODO Extract from rodinia
+
+*** TODO Match rodinia on GPU04
+
+** QR
+
+https://github.com/diku-dk/linalg/blob/master/lib/github.com/diku-dk/linalg/qr.fut
+
+Shows 10% on A100
+
+*** TODO Needs a public benchmark to compare to
+
+** NW
+
+Not done yet
+
+** LBM
+
+Troels scatter4life
+
+Gather-version has 10% speedup on A100 and 40% on gpu04
+
+*** TODO Look at the OpenCL implementation and see how they implement it, maybe we can mirror it.
+
+** OptionPricing
+
+Something here?
+
+** FFT
+
+10% speedup of slow flat_index version
+
+Check d6be5a2602d8bde8a72317d60875d445992866ba after
+https://github.com/diku-dk/futhark/issues/1572 has been fixed
+
+Not interesting
+
+** LocVolCalib
+
+*** TODO Find sequentialized version and see if it is faster than current version with short-circuiting.
+
+*** TODO Larger benchmarks
+
+** TODO Bulk validation
+
+10 benchmarks
+
+3-4 case studies
+
+** TODO Separate repository
+
+** TODO Increase datasets sizes!
