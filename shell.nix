@@ -16,5 +16,9 @@ pkgs.mkShell {
     pkgs.intel-compute-runtime
     pkgs.opencl-headers
     pkgs.ocl-icd
+    pkgs.z3
+    pkgs.python39
+    pkgs.python39Packages.z3
+    pkgs.python39Packages.setuptools
   ];
 }
