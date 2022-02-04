@@ -201,9 +201,7 @@ int main(int argc, char *argv[]) {
 	exit(EXIT_FAILURE);
     }
 
-    if (do_verify) {
-	matrix_duplicate(m, &mm, matrix_dim);
-    }
+    matrix_duplicate(m, &mm, matrix_dim);
 
     int sourcesize = 1024 * 1024;
     char *source = (char *)calloc(sourcesize, sizeof(char));
