@@ -91,7 +91,7 @@ static int initialize(int use_gpu) {
 	return -1;
     }
     // create command queue for the first device
-    cmd_queue = clCreateCommandQueue(context, device_list[0], 0, NULL);
+    cmd_queue = clCreateCommandQueueWithProperties(context, device_list[0], 0, NULL);
     if (!cmd_queue) {
       fprintf(stderr, "ERROR: clCreateCommandQueue() failed\n");
 	return -1;
@@ -209,22 +209,24 @@ int main(int argc, char *argv[]) {
 	return -1;
     }
 
-    char *kernel_lud_diag = "lud_diagonal";
-    char *kernel_lud_peri = "lud_perimeter";
-    char *kernel_lud_inter = "lud_internal";
+    const char *kernel_lud_diag = "lud_diagonal";
+    const char *kernel_lud_peri = "lud_perimeter";
+    const char *kernel_lud_inter = "lud_internal";
     FILE *fp = fopen("./lud_kernel.cl", "rb");
     if (!fp) {
-        fprintf(stderr, "ERROR: unable to open '%s'\n");
+        fprintf(stderr, "ERROR: unable to open ./lud_kernel.cl\n");
 	return -1;
     }
-    fread(source + strlen(source), sourcesize, 1, fp);
+    fread(source, sourcesize, 1, fp);
     fclose(fp);
 
     // Use 1: GPU  0: CPU
     int use_gpu = 1;
+
     // OpenCL initialization
     if (initialize(use_gpu))
 	return -1;
+
     // compile kernel
     cl_int err = 0;
     const char *slist[2] = { source, 0 };
@@ -234,20 +236,14 @@ int main(int argc, char *argv[]) {
 	return -1;
     }
     char clOptions[110];
-    //  sprintf(clOptions,"-I../../src");
+
     sprintf(clOptions, " ");
 #ifdef BLOCK_SIZE
     sprintf(clOptions + strlen(clOptions), " -DBLOCK_SIZE=%d", BLOCK_SIZE);
 #endif
 
     err = clBuildProgram(prog, 0, NULL, clOptions, NULL, NULL);
-    {				// show warnings/errors
-	//static char log[65536]; memset(log, 0, sizeof(log));
-	//cl_device_id device_id = 0;
-	//err = clGetContextInfo(context, CL_CONTEXT_DEVICES, sizeof(device_id), &device_id, NULL);
-	//clGetProgramBuildInfo(prog, device_id, CL_PROGRAM_BUILD_LOG, sizeof(log)-1, log, NULL);
-	//if(err || strstr(log,"warning:") || strstr(log, "error:")) printf("<<<<\n%s\n>>>>\n", log);
-    }
+
     if (err != CL_SUCCESS) {
         fprintf(stderr, "ERROR: clBuildProgram() => %d\n", err);
 	return -1;
@@ -329,9 +325,10 @@ int main(int argc, char *argv[]) {
 	    clSetKernelArg(perimeter, 5, sizeof(cl_int), (void *)&i);
 
 	    size_t global_work2[3] =
-		{ BLOCK_SIZE * 2 * ((matrix_dim - i) / BLOCK_SIZE - 1), 1,
-		1
-	    };
+              { BLOCK_SIZE * 2 * (((size_t) matrix_dim - (size_t) i) / BLOCK_SIZE - 1),
+                  1,
+                  1
+                };
 	    size_t local_work2[3] = { BLOCK_SIZE * 2, 1, 1 };
 
 	    err =
@@ -354,8 +351,8 @@ int main(int argc, char *argv[]) {
 	    clSetKernelArg(internal, 4, sizeof(cl_int), (void *)&i);
 
 	    size_t global_work3[3] =
-		{ BLOCK_SIZE * ((matrix_dim - i) / BLOCK_SIZE - 1),
-		BLOCK_SIZE * ((matrix_dim - i) / BLOCK_SIZE - 1), 1
+              { BLOCK_SIZE * (((size_t) matrix_dim - (size_t) i) / BLOCK_SIZE - 1),
+		BLOCK_SIZE * (((size_t) matrix_dim - (size_t) i) / BLOCK_SIZE - 1), 1
 	    };
 	    size_t local_work3[3] = { BLOCK_SIZE, BLOCK_SIZE, 1 };
 
