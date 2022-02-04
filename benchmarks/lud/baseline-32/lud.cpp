@@ -277,7 +277,7 @@ int main(int argc, char *argv[]) {
     for (int run = 0; run < runs + 1; run++) {
 	err =
 	    clEnqueueWriteBuffer(cmd_queue, d_m, 1, 0,
-				 matrix_dim * matrix_dim * sizeof(float), m, 0,
+				 matrix_dim * matrix_dim * sizeof(float), mm, 0,
 				 0, 0);
 	if (err != CL_SUCCESS) {
           fprintf(stderr, "ERROR: clEnqueueWriteBuffer d_m (size:%d) => %d\n",
