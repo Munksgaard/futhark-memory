@@ -136,12 +136,11 @@ matrix_multiply(float *inputa, float *inputb, float *output, int size){
 
 }
 
-func_ret_t
-lud_verify(float *m, float *lu, int matrix_dim){
+void lud_verify(float *m, float *lu, int matrix_dim){
   int i,j,k;
   float *tmp = (float*)malloc(matrix_dim*matrix_dim*sizeof(float));
 
-  for (i=0; i < matrix_dim; i ++)
+  for (i=0; i < matrix_dim; i ++) {
     for (j=0; j< matrix_dim; j++) {
         float sum = 0;
         float l,u;
@@ -155,34 +154,15 @@ lud_verify(float *m, float *lu, int matrix_dim){
         }
         tmp[i*matrix_dim+j] = sum;
     }
-  /* printf(">>>>>LU<<<<<<<\n"); */
-  /* for (i=0; i<matrix_dim; i++){ */
-  /*   for (j=0; j<matrix_dim;j++){ */
-  /*       printf("%f ", lu[i*matrix_dim+j]); */
-  /*   } */
-  /*   printf("\n"); */
-  /* } */
-  /* printf(">>>>>result<<<<<<<\n"); */
-  /* for (i=0; i<matrix_dim; i++){ */
-  /*   for (j=0; j<matrix_dim;j++){ */
-  /*       printf("%f ", tmp[i*matrix_dim+j]); */
-  /*   } */
-  /*   printf("\n"); */
-  /* } */
-  /* printf(">>>>>input<<<<<<<\n"); */
-  /* for (i=0; i<matrix_dim; i++){ */
-  /*   for (j=0; j<matrix_dim;j++){ */
-  /*       printf("%f ", m[i*matrix_dim+j]); */
-  /*   } */
-  /*   printf("\n"); */
-  /* } */
+  }
 
   for (i=0; i<matrix_dim; i++){
       for (j=0; j<matrix_dim; j++){
           if ( fabs(m[i*matrix_dim+j]-tmp[i*matrix_dim+j]) > 0.0001)
-            fprintf(stderr, "dismatch at (%d, %d): (o)%f (n)%f\n", i, j, m[i*matrix_dim+j], tmp[i*matrix_dim+j]);
+            printf("dismatch at (%d, %d): (o)%f (n)%f\n", i, j, m[i*matrix_dim+j], tmp[i*matrix_dim+j]);
       }
   }
+
   free(tmp);
 }
 
