@@ -24,6 +24,9 @@
 
 #include "common.h"
 #include <sys/time.h>
+
+#define CL_TARGET_OPENCL_VERSION 200
+
 #include <CL/cl.h>
 
 #include <string.h>
@@ -141,7 +144,7 @@ int main(int argc, char *argv[]) {
     stopwatch sw;
     int runs = 10;
 
-    while ((opt = getopt_long(argc, argv, "::vs:i:",
+    while ((opt = getopt_long(argc, argv, "::vs:i:r:",
 			      long_options, &option_index)) != -1) {
 	switch (opt) {
 	case 'i':
@@ -217,7 +220,12 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "ERROR: unable to open ./lud_kernel.cl\n");
 	return -1;
     }
-    fread(source, sourcesize, 1, fp);
+
+    if (fread(source, sourcesize, 1, fp) < 0) {
+      fprintf(stderr, "ERROR: couldn't read from ./lud_kernel.cl\n");
+      return -1;
+    }
+
     fclose(fp);
 
     // Use 1: GPU  0: CPU

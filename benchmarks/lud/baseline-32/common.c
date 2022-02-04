@@ -48,7 +48,9 @@ create_matrix_from_file(float **mp, const char* filename, int *size_p){
       return RET_FAILURE;
   }
 
-  fscanf(fp, "%d\n", &size);
+  if (fscanf(fp, "%d\n", &size) <= 0) {
+    return RET_FAILURE;
+  }
 
   m = (float*) malloc(sizeof(float)*size*size);
   if ( m == NULL) {
@@ -58,68 +60,15 @@ create_matrix_from_file(float **mp, const char* filename, int *size_p){
 
   for (i=0; i < size; i++) {
       for (j=0; j < size; j++) {
-          fscanf(fp, "%f ", m+i*size+j);
+        if (fscanf(fp, "%f ", m+i*size+j) <= 0) {
+          return RET_FAILURE;
+        }
       }
   }
 
   fclose(fp);
 
   *size_p = size;
-  *mp = m;
-
-  return RET_SUCCESS;
-}
-
-
-func_ret_t
-create_matrix_from_random(float **mp, int size){
-  float *l, *u, *m;
-  int i,j,k;
-
-  srand(time(NULL));
-
-  l = (float*)malloc(size*size*sizeof(float));
-  if ( l == NULL)
-    return RET_FAILURE;
-
-  u = (float*)malloc(size*size*sizeof(float));
-  if ( u == NULL) {
-      free(l);
-      return RET_FAILURE;
-  }
-
-  for (i = 0; i < size; i++) {
-      for (j=0; j < size; j++) {
-          if (i>j) {
-              l[i*size+j] = GET_RAND_FP;
-          } else if (i == j) {
-              l[i*size+j] = 1;
-          } else {
-              l[i*size+j] = 0;
-          }
-      }
-  }
-
-  for (j=0; j < size; j++) {
-      for (i=0; i < size; i++) {
-          if (i>j) {
-              u[j*size+i] = 0;
-          }else {
-              u[j*size+i] = GET_RAND_FP;
-          }
-      }
-  }
-
-  for (i=0; i < size; i++) {
-      for (j=0; j < size; j++) {
-          for (k=0; k <= MIN(i,j); k++)
-            m[i*size+j] = l[i*size+k] * u[j*size+k];
-      }
-  }
-
-  free(l);
-  free(u);
-
   *mp = m;
 
   return RET_SUCCESS;
