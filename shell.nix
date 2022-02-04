@@ -20,5 +20,7 @@ pkgs.mkShell {
     pkgs.python39
     pkgs.python39Packages.z3
     pkgs.python39Packages.setuptools
+    pkgs.moreutils
+    pkgs.pkgconfig
   ];
 }
