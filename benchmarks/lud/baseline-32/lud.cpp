@@ -390,6 +390,8 @@ int main(int argc, char *argv[]) {
 	    return -1;
 	}
 
+	clFinish(cmd_queue);
+
 	/* end of timing point */
 	stopwatch_stop(&sw);
 
@@ -397,14 +399,15 @@ int main(int argc, char *argv[]) {
 	    clEnqueueReadBuffer(cmd_queue, d_m, 1, 0,
 				matrix_dim * matrix_dim * sizeof(float), m, 0,
 				0, 0);
+
 	if (err != CL_SUCCESS) {
             fprintf(stderr, "ERROR: clEnqueueReadBuffer  d_m (size:%d) => %d\n",
  		   matrix_dim * matrix_dim, err);
 	    return -1;
 	}
-	clFinish(cmd_queue);
+
 	if (run != 0) {
-          printf("%lf\n", 1000000 * get_interval_by_sec(&sw));
+          printf("%ld\n", get_interval_by_usec(&sw));
 	}
     }
 

@@ -30,7 +30,7 @@ get_interval_by_sec(stopwatch *sw){
     return ((double)(sw->end.tv_sec-sw->begin.tv_sec)+(double)(sw->end.tv_usec-sw->begin.tv_usec)/1000000);
 }
 
-int
+long int
 get_interval_by_usec(stopwatch *sw){
     if (sw == NULL)
         return 0;
