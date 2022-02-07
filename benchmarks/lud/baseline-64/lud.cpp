@@ -25,7 +25,8 @@
 #include "common.h"
 #include <sys/time.h>
 
-#define CL_TARGET_OPENCL_VERSION 200
+#define CL_TARGET_OPENCL_VERSION 120
+#define CL_USE_DEPRECATED_OPENCL_1_2_APIS
 
 #include <CL/cl.h>
 
@@ -94,7 +95,7 @@ static int initialize(int use_gpu) {
 	return -1;
     }
     // create command queue for the first device
-    cmd_queue = clCreateCommandQueueWithProperties(context, device_list[0], 0, NULL);
+    cmd_queue = clCreateCommandQueue(context, device_list[0], 0, NULL);
     if (!cmd_queue) {
       fprintf(stderr, "ERROR: clCreateCommandQueue() failed\n");
 	return -1;
