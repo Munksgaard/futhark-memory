@@ -1,4 +1,4 @@
-FUTHARK ?= futhark
+FUTHARK ?= ../../../bin/futhark
 RUNS ?= 10
 
 BENCHMARK ?= lud.fut
