@@ -1,26 +1,13 @@
 let
-  sources = import ./nix/sources.nix;
-  pkgs = import sources.nixpkgs {};
+  sources = import ./futhark/nix/sources.nix;
+  pkgs = import sources.nixpkgs { };
   futhark_shell = import ./futhark/shell.nix;
-in
 
-let pythonEnv = (pkgs.python37.withPackages (ps: [
-      ps.numpy
-      ps.matplotlib
-    ])).override (args: { ignoreCollisions = true; });
-in
-pkgs.mkShell {
-  buildInputs = [
-    pythonEnv
-    futhark_shell.buildInputs
-    pkgs.intel-compute-runtime
-    pkgs.opencl-headers
-    pkgs.ocl-icd
-    pkgs.z3
-    pkgs.python39
-    pkgs.python39Packages.z3
-    pkgs.python39Packages.setuptools
-    pkgs.moreutils
-    pkgs.pkgconfig
-  ];
-}
+in let
+  pythonEnv =
+    (pkgs.python3.withPackages (ps: [ ps.numpy ps.matplotlib ])).override
+    (args: { ignoreCollisions = true; });
+in futhark_shell.overrideAttrs (oldAttrs: rec {
+  buildInputs = oldAttrs.buildInputs
+    ++ [ pythonEnv pkgs.moreutils pkgs.jq ];
+})
