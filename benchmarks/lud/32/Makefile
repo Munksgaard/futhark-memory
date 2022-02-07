@@ -24,3 +24,6 @@ short-circuiting.json: $(BENCHMARK) $(EXTRA_DEPS)
 	$(FUTHARK) dev --gpu -a -e --cse -e --double-buffer -e --cse --lift-allocations-gpu -e --short-circuit-gpu -e --cse -e --lower-allocations-gpu --cse -e --memory-block-merging -e --expand-allocations -e --backend=opencl --server $<
 	$(FUTHARK) autotune --backend=opencl --tuning=short-circuiting.tuning --skip-compilation --json $@ --runs $(RUNS) $<
 	$(FUTHARK) bench --backend=opencl --tuning=short-circuiting.tuning --skip-compilation --json $@ --runs $(RUNS) $<
+
+clean:
+	rm -f $(OUTPUTS)
