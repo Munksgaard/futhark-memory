@@ -117,7 +117,7 @@ void lud_verify(float *m, float *lu, int matrix_dim){
 
 void
 matrix_duplicate(float *src, float **dst, int matrix_dim) {
-    int s = matrix_dim*matrix_dim*sizeof(float);
+   size_t s = matrix_dim*matrix_dim*sizeof(float);
    float *p = (float *) malloc (s);
    memcpy(p, src, s);
    *dst = p;

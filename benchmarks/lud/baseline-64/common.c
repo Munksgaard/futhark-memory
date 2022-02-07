@@ -117,7 +117,7 @@ void lud_verify(double *m, double *lu, int matrix_dim){
 
 void
 matrix_duplicate(double *src, double **dst, int matrix_dim) {
-    int s = matrix_dim*matrix_dim*sizeof(double);
+   size_t s = matrix_dim*matrix_dim*sizeof(double);
    double *p = (double *) malloc (s);
    memcpy(p, src, s);
    *dst = p;
