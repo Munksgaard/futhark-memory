@@ -8,7 +8,6 @@ results.json: lud
 	  | jq -nR '{"2048": { "runtimes": [inputs | select(length>0) | tonumber]}}' \
 	  > $@
 
-bla:
 	./$< -s 4096 -r $(RUNS) \
 	  | jq -nR '{"4096": { "runtimes": [inputs | select(length>0) | tonumber]}}' \
 	  | jq -s '.[0] + .[1]' - $@ \
@@ -21,6 +20,11 @@ bla:
 
 	./$< -s 16384 -r $(RUNS) \
 	  | jq -nR '{"16384": { "runtimes": [inputs | select(length>0) | tonumber]}}' \
+	  | jq -s '.[0] + .[1]' - $@ \
+	  | sponge $@
+
+	./$< -s 32768 -r $(RUNS) \
+	  | jq -nR '{"32768": { "runtimes": [inputs | select(length>0) | tonumber]}}' \
 	  | jq -s '.[0] + .[1]' - $@ \
 	  | sponge $@
 
