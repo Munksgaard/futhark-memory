@@ -24,11 +24,6 @@ bla:
 	  | jq -s '.[0] + .[1]' - $@ \
 	  | sponge $@
 
-	./$< -s 32768 -r $(RUNS) \
-	  | jq -nR '{"32768": { "runtimes": [inputs | select(length>0) | tonumber]}}' \
-	  | jq -s '.[0] + .[1]' - $@ \
-	  | sponge $@
-
 lud: lud.cpp common.c common.h
 	$(CC) $(CC_FLAGS) -o $@ lud.cpp common.c -lOpenCL
 
