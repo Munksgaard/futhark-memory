@@ -1,13 +1,13 @@
 -- Generic pricing
 -- ==
--- compiled input @ OptionPricing64-data/small.in
--- output @ OptionPricing64-data/small.out
+-- compiled input @ OptionPricing-data/small.in
+-- output @ OptionPricing-data/small.out
 --
--- compiled input @ OptionPricing64-data/medium.in
--- output @ OptionPricing64-data/medium.out
+-- compiled input @ OptionPricing-data/medium.in
+-- output @ OptionPricing-data/medium.out
 --
--- compiled input @ OptionPricing64-data/large.in
--- output @ OptionPricing64-data/large.out
+-- compiled input @ OptionPricing-data/large.in
+-- output @ OptionPricing-data/large.out
 
 let grayCode(x: i32): i32 = (x >> 1) ^ x
 
