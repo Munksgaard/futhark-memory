@@ -34,7 +34,7 @@ stopwatch_stop (stopwatch *sw);
 double
 get_interval_by_sec(stopwatch *sw);
 
-int
+long int
 get_interval_by_usec(stopwatch *sw);
 
 func_ret_t
