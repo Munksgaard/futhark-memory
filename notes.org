@@ -524,3 +524,88 @@ Not interesting
 ** TODO Separate repository
 
 ** TODO Increase datasets sizes!
+
+* Benchmark plan
+
+Three versions for each: plain, MemBlockMerge, MemBlockMerge+ShortCircuit.
+
+Also, we need a baseline, eg. the Rodinia implementation.
+
+Check CFD, myoctyte
+
+** Memory Block Merge
+
+*** LocVolCalib
+
+On doubles. Shows intragroup, reuse of shared memory.
+
+Validated on K40, probably needs larger dataset on A100.
+
+*** bfast
+
+On doubles. Shows intra-group, reuse of shared memory.
+
+Somewhat validated on K40. Needs large dataset on A100.
+
+*** OptionPricing
+
+Reduce global memory footprint
+
+Shows large speedup (1.3x-1.5x) on A100, re-investigate.
+
+*** canny
+
+???
+
+Hypothesis: reduce global memory footprint
+
+*** Bulk validation
+
+The entire benchmark suite. How many did reduce memory footprint?
+
+** Array Short Circuiting
+
+*** lud
+
+Validated on A100, 1.3x speedup.
+
+It's slow on MI100. Try to change tile sizes to 16x2. It's hard coded in the
+compiler in some block tiling pass.
+
+*** nw
+
+Mostly quantitative, needs interval splitting.
+
+*** lbm
+
+validated on GPU04 (1.4x). Needs large dataset for A100.
+
+*** LocVolCalib
+
+Needs the old sequential tridiag version. There are in-place updates that
+hopefully enable caching.
+
+*** OptionPricing
+
+Short-circuit the dst to src of map/scan etc.
+
+**** Validate hypothesis on smaller example
+
+#+begin_src
+let y = map (+ 1) x
+let x[:] = y
+#+end_src
+
+Is y short-circuited into x?
+
+Also try similar with scan and scanl from haskell (n+1 scan)
+
+** Others to check
+
+*** cfd
+
+*** myocyte
+
+*** heston
+
+*** ocean-sim
