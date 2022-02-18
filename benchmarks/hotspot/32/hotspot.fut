@@ -2,15 +2,10 @@
 -- https://github.com/kkushagra/rodinia/blob/master/openmp/hotspot/hotspot_openmp.cpp
 --
 -- ==
--- tags { futhark-c futhark-opencl }
--- compiled input @ data/64.in
--- output @ data/64.out
---
--- input @ data/512.in
--- output @ data/512.out
---
--- input @ data/1024.in
--- output @ data/1024.out
+-- random compiled input { 360i32 [8192][8192]f32 [8192][8192]f32 }
+-- random compiled input { 360i32 [16384][16384]f32 [16384][16384]f32 }
+-- random compiled input { 360i32 [32768][32768]f32 [32768][32768]f32 }
+-- structure gpu-mem { Alloc 11 }
 
 -- Maximum power density possible (say 300W for a 10mm x 10mm chip)
 let max_pd: f32 = 3.0e6
