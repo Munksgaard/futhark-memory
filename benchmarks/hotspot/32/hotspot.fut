@@ -2,6 +2,8 @@
 -- https://github.com/kkushagra/rodinia/blob/master/openmp/hotspot/hotspot_openmp.cpp
 --
 -- ==
+-- random compiled input { 360i32 [2048][2048]f32 [2048][2048]f32 }
+-- random compiled input { 360i32 [4096][4096]f32 [4096][4096]f32 }
 -- random compiled input { 360i32 [8192][8192]f32 [8192][8192]f32 }
 -- random compiled input { 360i32 [16384][16384]f32 [16384][16384]f32 }
 -- random compiled input { 360i32 [32768][32768]f32 [32768][32768]f32 }
