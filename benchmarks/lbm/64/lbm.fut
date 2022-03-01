@@ -230,7 +230,7 @@ let main_helper [f] (grid_init: *[f]f64) (steps: i64): *[f]f64 =
 
 --Benchmark
 -- ==
--- compiled input @ ../data/futhark_64.dat
+-- compiled input @ ../data/f64.data
 
 def main [s] (input: *[s]f64): *[s]f64 =
   main_helper input 3000
