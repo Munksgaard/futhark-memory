@@ -68,7 +68,7 @@ def lud_diagonal [b] (a: [b][b]f64): *[b][b]f64 =
   |> head
 
 def lud_perimeter_upper [m][b] (diag: [b][b]f64) (a0s: [m][b][b]f64): *[m][b][b]f64 =
-    let a1s = map (\ (x: [b][b]f64): [b][b]f64  -> transpose(x)) a0s in
+    let a1s = map transpose a0s in
     let a2s =
         map (\a1 ->
                map (\row0 -> -- Upper
@@ -110,10 +110,7 @@ def lud_internal [m][b] (top_per: [m][b][b]f64) (lft_per: [m][b][b]f64) (mat_sli
 
 def main [num_blocks] (matb: *[num_blocks][num_blocks][32][32]f64): *[num_blocks][num_blocks][32][32]f64 =
     #[unsafe]
-    let b = block_size
-    let n = b * num_blocks
-
-    let matb = loop matb for step < (n / b) - 1 do
+    let matb = loop matb for step < num_blocks - 1 do
         -- 1. compute the current diagonal block
         let diag = lud_diagonal matb[step,step] in
 
@@ -136,7 +133,7 @@ def main [num_blocks] (matb: *[num_blocks][num_blocks][32][32]f64): *[num_blocks
         let matb[step+1:num_blocks, step+1:num_blocks] = internal
         in matb
 
-    let last_step = (n / b) - 1 in
+    let last_step = num_blocks - 1 in
     let matb[last_step,last_step] =
       lud_diagonal matb[last_step, last_step]
 
