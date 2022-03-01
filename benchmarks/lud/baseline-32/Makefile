@@ -5,26 +5,26 @@ RUNS ?= 10
 
 results.json: lud
 	./$< -s 2048 -r $(RUNS) \
-	  | jq -nR '{"2048": { "runtimes": [inputs | select(length>0) | tonumber]}}' \
+	  | jq -nR '{"generate 2048i64": { "runtimes": [inputs | select(length>0) | tonumber]}}' \
 	  > $@
 
 	./$< -s 4096 -r $(RUNS) \
-	  | jq -nR '{"4096": { "runtimes": [inputs | select(length>0) | tonumber]}}' \
+	  | jq -nR '{"generate 4096i64": { "runtimes": [inputs | select(length>0) | tonumber]}}' \
 	  | jq -s '.[0] + .[1]' - $@ \
 	  | sponge $@
 
 	./$< -s 8192 -r $(RUNS) \
-	  | jq -nR '{"8192": { "runtimes": [inputs | select(length>0) | tonumber]}}' \
+	  | jq -nR '{"generate 8192i64": { "runtimes": [inputs | select(length>0) | tonumber]}}' \
 	  | jq -s '.[0] + .[1]' - $@ \
 	  | sponge $@
 
 	./$< -s 16384 -r $(RUNS) \
-	  | jq -nR '{"16384": { "runtimes": [inputs | select(length>0) | tonumber]}}' \
+	  | jq -nR '{"generate 16384i64": { "runtimes": [inputs | select(length>0) | tonumber]}}' \
 	  | jq -s '.[0] + .[1]' - $@ \
 	  | sponge $@
 
 	./$< -s 32768 -r $(RUNS) \
-	  | jq -nR '{"32768": { "runtimes": [inputs | select(length>0) | tonumber]}}' \
+	  | jq -nR '{"generate 32768i64": { "runtimes": [inputs | select(length>0) | tonumber]}}' \
 	  | jq -s '.[0] + .[1]' - $@ \
 	  | sponge $@
 
