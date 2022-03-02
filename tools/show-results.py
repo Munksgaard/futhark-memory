@@ -13,7 +13,7 @@ from collections import OrderedDict
 def compare(baseline, plain_json, mrg_json, short_json, combined_json):
     speedups = {}
 
-    for dataset, results in sorted(plain_json.items(), key=lambda x: int(x[0])):
+    for dataset, results in plain_json.items():
         print('{name:12} baseline: {plain_runtime:>12}µ. reference: {baseline:>5.2f}x, mem block merge: {memblkmrg:>5.2f}x ({memblkmrg_base:>4.2f}x), short-circuit: {short:>5.2f}x ({short_base:>4.2f}x), combined: {combined:5.2f}x ({combined_base:4.2f}x)'
                 .format(name = textwrap.shorten(dataset, width=10) + ':',
                         plain_runtime = np.mean(results["runtimes"]),
