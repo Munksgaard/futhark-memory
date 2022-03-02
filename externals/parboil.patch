@@ -1,0 +1,8 @@
+diff -x '*~' -x .git -urw --new-file parboil/common/Makefile.conf /home/jxk588/tmp/parboil/common/Makefile.conf
+--- parboil/common/Makefile.conf	1970-01-01 01:00:00.000000000 +0100
++++ parboil/common/Makefile.conf	2022-03-01 11:51:54.543425000 +0100
+@@ -0,0 +1,4 @@
++CUDA_PATH=/usr/local/cuda
++CUDA_LIB_PATH=/usr/local/cuda/lib64
++OPENCL_PATH=/usr/local/cuda
++OPENCL_LIB_PATH=/usr/lib
