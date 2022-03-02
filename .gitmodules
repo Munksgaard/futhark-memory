@@ -1,3 +1,6 @@
 [submodule "futhark"]
 	path = futhark
 	url = https://github.com/diku-dk/futhark
+[submodule "benchmarks/LocVolCalib/baseline-32/finpar"]
+	path = benchmarks/LocVolCalib/baseline-32/finpar
+	url = https://github.com/HIPERFIT/finpar
