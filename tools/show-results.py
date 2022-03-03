@@ -13,32 +13,39 @@ from collections import OrderedDict
 def compare(reference, plain_json, mrg_json, short_json, combined_json):
     speedups = {}
 
+    maxlen = max(map(lambda x: len(x), list(plain_json.keys())))
+
     print('Baseline: plain')
     for dataset, results in plain_json.items():
-        print('{name:12} '
+        if reference is None:
+            ref = np.nan
+        else:
+            ref = np.mean(reference[dataset]["runtimes"])
+        print('{name} '
               'plain: {plain_runtime:>12}µ, '
               'reference: {reference:>5.2f}x, '
               'mem block merge: {memblkmrg:>5.2f}x, '
               'short-circuit: {short:>5.2f}x, '
               'combined: {combined:5.2f}x'
-              .format(name = textwrap.shorten(dataset, width=10) + ':',
+              .format(name = (dataset + ':').ljust(maxlen+1),
                       plain_runtime = np.mean(results["runtimes"]),
-                      reference = np.mean(results["runtimes"]) / np.mean(reference[dataset]["runtimes"]),
+                      reference = np.mean(results["runtimes"]) / ref,
                       memblkmrg = np.mean(results["runtimes"]) / np.mean(mrg_json[dataset]["runtimes"]),
                       short = np.mean(results["runtimes"]) / np.mean(short_json[dataset]["runtimes"]),
                       combined = np.mean(results["runtimes"]) / np.mean(combined_json[dataset]["runtimes"])))
 
-    print('')
+    if reference is None:
+        return
 
-    print('Baseline: reference')
+    print('\nBaseline: reference')
     for dataset, results in plain_json.items():
-        print('{name:12} '
+        print('{name} '
               'plain: {plain:>5.2f}x, '
-              'reference: {reference:>12}x, '
+              'reference: {reference:>12}µ, '
               'mem block merge: {memblkmrg:>5.2f}x, '
               'short-circuit: {short:>5.2f}x, '
               'combined: {combined:5.2f}x'
-              .format(name = textwrap.shorten(dataset, width=10) + ':',
+              .format(name = (dataset + ':').ljust(maxlen+1),
                       reference = np.mean(reference[dataset]["runtimes"]),
                       plain = np.mean(reference[dataset]["runtimes"]) / np.mean(results["runtimes"]),
                       memblkmrg = np.mean(reference[dataset]["runtimes"]) / np.mean(mrg_json[dataset]["runtimes"]),
@@ -48,10 +55,24 @@ def compare(reference, plain_json, mrg_json, short_json, combined_json):
 if __name__ == '__main__':
     _, bench, bits = sys.argv
 
-    reference = json.load(open(bench + '/baseline-' + bits + '/results.json'))
-    plain_json = json.load(open(bench + '/' + bits + '/plain.json'))
-    mrg_json = json.load(open(bench + '/' + bits + '/memory-block-merging.json'))
-    short_json = json.load(open(bench + '/' + bits + '/short-circuiting-no-merge.json'))
-    combined_json = json.load(open(bench + '/' + bits + '/short-circuiting.json'))
+    reference = None
+    try:
+        with open(bench + '/baseline-' + bits + '/results.json') as f:
+            reference = json.load(f)
+    except FileNotFoundError:
+        pass
+
+
+    with open(bench + '/' + bits + '/plain.json') as f:
+        plain_json = json.load(f)
+
+    with open(bench + '/' + bits + '/memory-block-merging.json') as f:
+        mrg_json = json.load(f)
+
+    with open(bench + '/' + bits + '/short-circuiting-no-merge.json') as f:
+        short_json = json.load(f)
+
+    with open(bench + '/' + bits + '/short-circuiting.json') as f:
+        combined_json = json.load(f)
 
     compare(reference, plain_json, mrg_json, short_json, combined_json)
