@@ -470,11 +470,11 @@ Let's again take a look at the simplified IR code in question:
 
 10% on A100, 25% with larger dataset
 
-*** TODO How does it compare to the rodinia runtime?
+*** DONE How does it compare to the rodinia runtime?
 
-*** TODO Extract from rodinia
+*** DONE Extract from rodinia
 
-*** TODO Match rodinia on GPU04
+*** DONE Match rodinia on GPU04
 
 ** QR
 
@@ -511,7 +511,7 @@ Not interesting
 
 ** LocVolCalib
 
-*** TODO Find sequentialized version and see if it is faster than current version with short-circuiting.
+*** TODO Find old sequentialized version and see if it is faster than current version with short-circuiting.
 
 *** TODO Larger benchmarks
 
@@ -535,7 +535,7 @@ Check CFD, myoctyte
 
 ** Memory Block Merge
 
-*** LocVolCalib
+*** DONE LocVolCalib
 
 On doubles. Shows intragroup, reuse of shared memory.
 
@@ -547,11 +547,13 @@ On doubles. Shows intra-group, reuse of shared memory.
 
 Somewhat validated on K40. Needs large dataset on A100.
 
-*** OptionPricing
+*** DONE OptionPricing
 
 Reduce global memory footprint
 
 Shows large speedup (1.3x-1.5x) on A100, re-investigate.
+
+No, it's 1.2x on A100, both on doubles and singles
 
 *** canny
 
@@ -565,7 +567,7 @@ The entire benchmark suite. How many did reduce memory footprint?
 
 ** Array Short Circuiting
 
-*** lud
+*** DONE lud
 
 Validated on A100, 1.3x speedup.
 
@@ -576,16 +578,23 @@ compiler in some block tiling pass.
 
 Mostly quantitative, needs interval splitting.
 
-*** lbm
+*** DONE lbm
 
 validated on GPU04 (1.4x). Needs large dataset for A100.
 
-*** LocVolCalib
+*** DONE LocVolCalib
 
 Needs the old sequential tridiag version. There are in-place updates that
 hopefully enable caching.
 
-*** OptionPricing
+*** DONE hotspot
+:LOGBOOK:
+CLOCK: [2022-02-21 Mon 14:52]--[2022-02-21 Mon 15:17] =>  0:25
+CLOCK: [2022-02-21 Mon 14:21]--[2022-02-21 Mon 14:46] =>  0:25
+CLOCK: [2022-02-21 Mon 13:49]--[2022-02-21 Mon 14:14] =>  0:25
+:END:
+
+*** DONE OptionPricing
 
 Short-circuit the dst to src of map/scan etc.
 
@@ -600,12 +609,213 @@ Is y short-circuited into x?
 
 Also try similar with scan and scanl from haskell (n+1 scan)
 
+Get the speedup
+
+No real speedup, unfortunately
+
 ** Others to check
 
 *** cfd
 
+[jxk588@futharkhpa01fl cfd]$ futhark-old-coalesce bench --backend=opencl -r 100 --json old-coalesce.json cfd.fut
+Compiling cfd.fut...
+Reporting average runtime of 100 runs for each dataset.
+
+cfd.fut (no tuning file):
+data/fvcorr.domn.097K.toa:      75797μs (RSD: 0.041; min:  -1%; max: +41%)
+data/fvcorr.domn.193K.toa:     139996μs (RSD: 0.006; min:  -2%; max:  +2%)
+[jxk588@futharkhpa01fl cfd]$ futhark-master bench --backend=opencl -r 100 --json master.json cfd.fut
+Compiling cfd.fut...
+Reporting average runtime of 100 runs for each dataset.
+
+cfd.fut (no tuning file):
+data/fvcorr.domn.097K.toa:      77045μs (RSD: 0.060; min:  -2%; max: +56%)
+data/fvcorr.domn.193K.toa:     140543μs (RSD: 0.007; min:  -2%; max:  +1%)
+[jxk588@futharkhpa01fl cfd]$ ~/src/futhark/tools/cmp-bench-json.py  {master,old-coalesce}.json
+
+cfd.fut
+  data/fvcorr.domn.097K.toa:                                            1.02x
+  data/fvcorr.domn.193K.toa:                                            1.00x
+
+
 *** myocyte
+
+[jxk588@futharkhpa01fl myocyte]$ futhark-master bench --backend=opencl -r 10 --json master.json myocyte.fut
+Compiling myocyte.fut...
+Reporting average runtime of 10 runs for each dataset.
+
+myocyte.fut (no tuning file):
+data/small.in:      136291μs (RSD: 0.006; min:  -1%; max:  +1%)
+data/medium.in:      40634μs (RSD: 0.002; min:  -0%; max:  +0%)
+data/large.in:     1341603μs (RSD: 0.000; min:  -0%; max:  +0%)
+[jxk588@futharkhpa01fl myocyte]$ futhark-old-coalesce bench --backend=opencl -r 10 --json old-coalesce.json myocyte.fut
+Compiling myocyte.fut...
+Reporting average runtime of 10 runs for each dataset.
+
+myocyte.fut (no tuning file):
+data/small.in:      128015μs (RSD: 0.002; min:  -0%; max:  +0%)
+data/medium.in:      40111μs (RSD: 0.004; min:  -0%; max:  +1%)
+data/large.in:     1328733μs (RSD: 0.001; min:  -0%; max:  +0%)
+[jxk588@futharkhpa01fl myocyte]$ ~/src/futhark/tools/cmp-bench-json.py  {master,old-coalesce}.json
+
+myocyte.fut
+  data/large.in:                                                        1.01x
+  data/medium.in:                                                       1.01x
+  data/small.in:                                                        1.06x
 
 *** heston
 
+Nothing here, really.
+
+[jxk588@futharkhpa01fl heston]$ futhark-master bench --backend=opencl -r 10 --json master-real.json heston64.fut
+Compiling heston64.fut...
+Reporting average runtime of 10 runs for each dataset.
+
+heston64.fut (no tuning file):
+data/1062_quotes.in:        24261μs (RSD: 0.009; min:  -2%; max:  +1%)
+data/10000_quotes.in:       37862μs (RSD: 0.144; min: -12%; max: +19%)
+data/100000_quotes.in:     202351μs (RSD: 0.003; min:  -0%; max:  +1%)
+[jxk588@futharkhpa01fl heston]$ futhark-old-coalesce bench --backend=opencl -r 10 --json old-coalesce.json heston64.fut
+Compiling heston64.fut...
+Reporting average runtime of 10 runs for each dataset.
+
+heston64.fut (no tuning file):
+data/1062_quotes.in:        23291μs (RSD: 0.020; min:  -4%; max:  +2%)
+data/10000_quotes.in:       35885μs (RSD: 0.080; min:  -8%; max: +20%)
+data/100000_quotes.in:     202006μs (RSD: 0.006; min:  -1%; max:  +1%)
+[jxk588@futharkhpa01fl heston]$ ~/src/futhark/tools/cmp-bench-json.py  {master-real,old-coalesce}.json
+
+heston64.fut
+  data/100000_quotes.in:                                                1.00x
+  data/10000_quotes.in:                                                 1.06x
+  data/1062_quotes.in:                                                  1.04x
+
+
 *** ocean-sim
+
+
+* Basis
+
+#+begin_src
+...
+let x@x_mem = ...
+...
+let y[i]@y_mem = x
+#+end_src
+
+
+So we have the source ~x@x_mem~, writes to the source ~x_wrts~, the destination
+~y@y_mem~, and uses (reads+writes) of the destination ~y_uses~. We can interpret
+the the writes and uses as sets, containing the points in memory referenced.
+
+In the case above, we want to short-circuit ~x~ directly into the memory of ~y~,
+so we avoid a copy at the end. That is legal if:
+
+ 1. The memory of ~x~ is last used in the short-circuiting statement.
+ 2. ~y_mem~ is allocated before the creation ~x~.
+ 3. Between the creation of ~x~ and the short-circuiting point, there is no
+    overlap between the uses of the destination and the writes to the source. In
+    other words, it must hold that ~x_wrts ∩ y_uses = ∅~.
+ 4. The creation of ~x~ is fresh, meaning that no values alias ~x~.
+ 5. We can project the index function of ~x~ into the memory space of ~y~ at the
+    creation of ~x~.
+
+Other examples:
+
+#+begin_src
+  concat
+  copy
+#+end_src
+
+** An example
+
+#+begin_src
+entry("main",
+      {i: direct, xss: *direct},
+      {*direct})
+  entry_main (xss_mem_4647 : mem, n_4619 : i64, m_4620 : i64, i_4621 : i64,
+              xss_4622 : *[n_4619][m_4620]f64 @ xss_mem_4647 ->
+                         {base: [n_4619, m_4620]; contiguous: true;
+                          LMADs: [{offset: 0i64; strides: [m_4620, 1i64];
+                                   rotates: [0i64, 0i64];
+                                   shape: [n_4619, m_4620]; permutation: [0, 1];
+                                   monotonicity: [Inc, Inc]}]})
+  : {mem, *[n_4619][m_4620]f64 @ ?0->
+          {base: [n_4619, m_4620]; contiguous: true; LMADs: [{offset: 0i64;
+                                                              strides: [m_4620, 1i64];
+                                                              rotates: [0i64, 0i64];
+                                                              shape: [n_4619, m_4620];
+                                                              permutation: [0, 1];
+                                                              monotonicity: [Inc, Inc]}]}} = {
+  let {segmap_group_size_4639 : i64} =
+    get_size(segmap_group_size_4631, group_size)
+  let {segmap_usable_groups_4640 : i64} =
+    sdiv_up64(m_4620, segmap_group_size_4639)
+  let {binop_y_4649 : i64} = mul_nw64(8i64, m_4620)
+  let {bytes_4650 : i64} = smax64(0i64, binop_y_4649)
+  let {mem_4651 : mem} =
+    alloc(bytes_4650)
+  let {defunc_1_map_res_4641 : [m_4620]f64 @ mem_4651 ->
+                               {base: [m_4620]; contiguous: true;
+                                LMADs: [{offset: 0i64; strides: [1i64];
+                                         rotates: [0i64]; shape: [m_4620];
+                                         permutation: [0];
+                                         monotonicity: [Inc]}]}} =
+    segmap(thread; #groups=segmap_usable_groups_4640; groupsize=segmap_group_size_4639)
+    (gtid_4642 < m_4620) (~phys_tid_4643) : {f64} {
+      let {x_4644 : f64} =
+        xss_4622[i_4621, gtid_4642]
+      let {defunc_0_f_res_4645 : f64} = fadd64(1.0f64, x_4644)
+      return {returns defunc_0_f_res_4645}
+    }
+  let {main_res_4627 : [n_4619][m_4620]f64 @ xss_mem_4647 ->
+                       {base: [n_4619, m_4620]; contiguous: true;
+                        LMADs: [{offset: 0i64; strides: [m_4620, 1i64];
+                                 rotates: [0i64, 0i64]; shape: [n_4619, m_4620];
+                                 permutation: [0, 1];
+                                 monotonicity: [Inc, Inc]}]}} =
+    xss_4622 with [i_4621, 0i64 :+ m_4620 * 1i64] = defunc_1_map_res_4641
+  in {xss_mem_4647, main_res_4627}
+}
+#+end_src
+
+#+begin_src
+def main (i: i64) (xss_mem: mem) (xss: [n][m]f64 @ xss_mem -> {0; n:m, m:1})
+         : (f64, mem, [n][m]f64 @ ?0 -> {0; n:m, m:1}) =
+  let bytes: i64 = max 0 (
+  let res_mem: mem = alloc(bytes)
+  let res: [m]f64 @ res_mem -> {0; m:1} =
+    map (gtid < m) {
+      let x: f64 = xss[i, gtid]
+      let x_res: f64 = x + 1
+      in x_res
+    }
+  let y: f64 = xss[i+1, 0] + 1
+  let main_res: [n][m]f64 @ xss_mem -> {0; n:m, m:1} =
+    xss with [i, 0:m] = res
+  in (xss_mem, y, main_res)
+#+end_src
+
+Our analysis proceeds from the bottom up. Thus, we start by hitting the
+short-circuiting point created by the in-place update of ~xss~. We wish to put
+~res~ directly in ~xss_mem~, avoiding the implicit copy in the in-place
+update. We then move upwards through the
+program, recording and checking all uses of the destination and writes to the
+source, making sure that it is indeed safe to put ~res~ directly in
+~xss_mem~.
+
+Proceeding upwards, we hit the declaration of ~y~, which has a single use of the
+destination, corresponding to the LMAD ~{(i+1) * m; }~. Because there have been
+no writes to the source (~res_mem~) yet, we simply store this information for
+later processing.
+
+Now we get to the declaration of ~res~, which is the array-creation point of
+~res~ and the firpst use of ~res_mem~. It consists of a parallel ~map~ operation
+over ~m~ elements, with each thread being given an id, ~gtid~. We first process
+the inner body separately, and then aggregate all the accesses using the map
+index. In other words, the read from ~xss[i, gtid]~, which corresponds to the
+destination use ~{i*m + gtid, }~ can be expanded over the map space ~gtid < m~,
+turning it into ~{i*m; m:1}~. If we know that ~m > 0~, we can statically verify
+that ~{i*m; m:1} ∩ {(i+1) * m; } = ∅~, which makes the short-circuit safe.
+
+In more detail, p
