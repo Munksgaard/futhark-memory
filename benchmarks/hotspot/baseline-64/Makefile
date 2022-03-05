@@ -5,26 +5,21 @@ RUNS ?= 10
 
 results.json: hotspot
 	./$< 2048 2 360 ../data/temp_2048.data ../data/power_2048.data /dev/null 10 \
-	  | jq -nR '{"360i32 [2048][2048]f32 [2048][2048]f32": { "runtimes": [inputs | select(length>0) | tonumber]}}' \
+	  | jq -nR '{"360i32 [2048][2048]f64 [2048][2048]f64": { "runtimes": [inputs | select(length>0) | tonumber]}}' \
 	  > $@
 
 	./$< 4096 2 360 ../data/temp_4096.data ../data/power_4096.data /dev/null 10 \
-	  | jq -nR '{"360i32 [4096][4096]f32 [4096][4096]f32": { "runtimes": [inputs | select(length>0) | tonumber]}}' \
+	  | jq -nR '{"360i32 [4096][4096]f64 [4096][4096]f64": { "runtimes": [inputs | select(length>0) | tonumber]}}' \
 	  | jq -s '.[0] + .[1]' - $@ \
 	  | sponge $@
 
 	./$< 8192 2 360 ../data/temp_8192.data ../data/power_8192.data /dev/null 10 \
-	  | jq -nR '{"360i32 [8192][8192]f32 [8192][8192]f32": { "runtimes": [inputs | select(length>0) | tonumber]}}' \
+	  | jq -nR '{"360i32 [8192][8192]f64 [8192][8192]f64": { "runtimes": [inputs | select(length>0) | tonumber]}}' \
 	  | jq -s '.[0] + .[1]' - $@ \
 	  | sponge $@
 
 	./$< 16384 2 360 ../data/temp_16384.data ../data/power_16384.data /dev/null 10 \
-	  | jq -nR '{"360i32 [16384][16384]f32 [16384][16384]f32": { "runtimes": [inputs | select(length>0) | tonumber]}}' \
-	  | jq -s '.[0] + .[1]' - $@ \
-	  | sponge $@
-
-	./$< 32768 2 360 ../data/temp_32768.data ../data/power_32768.data /dev/null 10 \
-	  | jq -nR '{"360i32 [32768][32768]f32 [32768][32768]f32": { "runtimes": [inputs | select(length>0) | tonumber]}}' \
+	  | jq -nR '{"360i32 [16384][16384]f64 [16384][16384]f64": { "runtimes": [inputs | select(length>0) | tonumber]}}' \
 	  | jq -s '.[0] + .[1]' - $@ \
 	  | sponge $@
 

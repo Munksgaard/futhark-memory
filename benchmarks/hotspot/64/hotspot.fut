@@ -6,7 +6,6 @@
 -- random compiled input { 360i32 [4096][4096]f64 [4096][4096]f64 }
 -- random compiled input { 360i32 [8192][8192]f64 [8192][8192]f64 }
 -- random compiled input { 360i32 [16384][16384]f64 [16384][16384]f64 }
--- random compiled input { 360i32 [32768][32768]f64 [32768][32768]f64 }
 -- structure gpu-mem { Alloc 11 }
 
 -- Maximum power density possible (say 300W for a 10mm x 10mm chip)

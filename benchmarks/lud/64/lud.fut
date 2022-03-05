@@ -5,7 +5,6 @@
 -- compiled script input { generate 4096i64 }
 -- compiled script input { generate 8192i64 }
 -- compiled script input { generate 16384i64 }
--- compiled script input { generate 32768i64 }
 
 module lud_input = import "lud-input"
 
