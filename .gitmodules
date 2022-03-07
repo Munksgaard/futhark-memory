@@ -5,5 +5,5 @@
 	path = externals/finpar
 	url = https://github.com/HIPERFIT/finpar
 [submodule "overleaf"]
-	path = overleaf
+	path = paper
 	url = https://git.overleaf.com/621901be09cf424e593a2919
