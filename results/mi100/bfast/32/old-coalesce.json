@@ -1,0 +1,1 @@
+{"bfast.fut":{"datasets":{"bfast-data/imean.in":"Failed to allocate memory in space 'device'.\nAttempted allocation:   7200000000 bytes\nCurrently allocated:   21945732000 bytes\nbfast.c:8689: OpenCL call\n  opencl_alloc(&ctx->opencl, ctx->log, (size_t) size, desc, &block->mem)\nfailed with error code -4 (Memory object allocation failure)\n\n"}}}
