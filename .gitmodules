@@ -4,3 +4,6 @@
 [submodule "benchmarks/LocVolCalib/baseline-32/finpar"]
 	path = externals/finpar
 	url = https://github.com/HIPERFIT/finpar
+[submodule "overleaf"]
+	path = overleaf
+	url = https://git.overleaf.com/621901be09cf424e593a2919
