@@ -15,7 +15,26 @@ def compare(reference, plain_json, mrg_json, short_json, combined_json):
 
     maxlen = max(map(lambda x: len(x), list(plain_json.keys())))
 
-    print('Baseline: plain')
+    print('Baseline: none')
+    for dataset, results in plain_json.items():
+        if reference is None:
+            ref = np.nan
+        else:
+            ref = np.mean(reference[dataset]["runtimes"])
+        print('{name} '
+              'plain: {plain_runtime:>12}µ, '
+              'reference: {reference:>12}µ, '
+              'mem block merge: {memblkmrg:>12}µ, '
+              'short-circuit: {short:>12}µ, '
+              'combined: {combined:12}µ'
+              .format(name = (dataset + ':').ljust(maxlen+1),
+                      plain_runtime = np.mean(results["runtimes"]),
+                      reference = ref,
+                      memblkmrg = np.mean(mrg_json[dataset]["runtimes"]),
+                      short = np.mean(short_json[dataset]["runtimes"]),
+                      combined = np.mean(combined_json[dataset]["runtimes"])))
+
+    print('\nBaseline: plain')
     for dataset, results in plain_json.items():
         if reference is None:
             ref = np.nan
