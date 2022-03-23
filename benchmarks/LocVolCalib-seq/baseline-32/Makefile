@@ -2,7 +2,7 @@ RUNS ?= 10
 
 EXTERNALS_DIR = ../../../externals
 FINPAR_DIR = $(EXTERNALS_DIR)/finpar
-BENCH_DIR = $(FINPAR_DIR)/LocVolCalib/AllParOpenCLMP
+BENCH_DIR = $(FINPAR_DIR)/LocVolCalib/OutParOpenCLMP
 
 results.json:
 	make -C $(EXTERNALS_DIR) finpar.patched
