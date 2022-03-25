@@ -10,27 +10,22 @@ RUNS ?= 10
 KERNEL_DIM ?= -DRD_WG_SIZE_0=16
 
 results.json: nw
-	./$< 2048 10 ./nw.cl $(RUNS) \
-	  | jq -nR '{"generate 2048i64": { "runtimes": [inputs | select(length>0) | tonumber]}}' \
+	./$< 4096 10 ./nw.cl $(RUNS) \
+	  | jq -nR '{"mk_input 4198401i64": { "runtimes": [inputs | select(length>0) | tonumber]}}' \
 	  > $@
 
-	./$< 4096 10 ./nw.cl $(RUNS) \
-	  | jq -nR '{"generate 4096i64": { "runtimes": [inputs | select(length>0) | tonumber]}}' \
-	  | jq -s '.[0] + .[1]' - $@ \
-	  | sponge $@
-
 	./$< 8192 10 ./nw.cl $(RUNS) \
-	  | jq -nR '{"generate 8192i64": { "runtimes": [inputs | select(length>0) | tonumber]}}' \
+	  | jq -nR '{"mk_input 67125249i64": { "runtimes": [inputs | select(length>0) | tonumber]}}' \
 	  | jq -s '.[0] + .[1]' - $@ \
 	  | sponge $@
 
 	./$< 16384 10 ./nw.cl $(RUNS) \
-	  | jq -nR '{"generate 16384i64": { "runtimes": [inputs | select(length>0) | tonumber]}}' \
+	  | jq -nR '{"mk_input 268468225i64": { "runtimes": [inputs | select(length>0) | tonumber]}}' \
 	  | jq -s '.[0] + .[1]' - $@ \
 	  | sponge $@
 
 	./$< 32768 10 ./nw.cl $(RUNS) \
-	  | jq -nR '{"generate 32768i64": { "runtimes": [inputs | select(length>0) | tonumber]}}' \
+	  | jq -nR '{"mk_input 1073807361i64": { "runtimes": [inputs | select(length>0) | tonumber]}}' \
 	  | jq -s '.[0] + .[1]' - $@ \
 	  | sponge $@
 

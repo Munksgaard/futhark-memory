@@ -2,10 +2,12 @@
 -- https://github.com/kkushagra/rodinia/blob/master/openmp/nw
 --
 -- ==
--- compiled random input { 64i64 10i32 [4198401]i32 [4198401]i32 }
--- compiled random input { 64i64 10i32 [67125249]i32 [67125249]i32 }
--- compiled random input { 64i64 10i32 [268468225]i32 [268468225]i32 }
--- compiled random input { 64i64 10i32 [1073807361]i32 [1073807361]i32 }
+-- compiled script input { mk_input 4198401i64 }
+-- compiled script input { mk_input 67125249i64 }
+-- compiled script input { mk_input 268468225i64 }
+-- compiled script input { mk_input 1073807361i64 }
+
+entry mk_input (len: i64) = (10i32, replicate len 0i32 , replicate len 0i32)
 
 import "intrinsics"
 
@@ -65,11 +67,11 @@ let process_block [b][bp1]
   in block[1:, 1:] :> *[b][b]i32
 
 def main [n]
-         (block_size: i64)
          (penalty: i32)
          (input: *[n]i32)
          (refs: [n]i32)
          : *[n]i32 =
+  let block_size = 64i64
   let row_length = i64.f64 <| f64.sqrt <| f64.i64 n
   let num_blocks = assert ((row_length - 1) % block_size == 0) ((row_length - 1) / block_size)
   let bp1 = assert (row_length > 3) (assert (2 * block_size < row_length) (block_size + 1))
