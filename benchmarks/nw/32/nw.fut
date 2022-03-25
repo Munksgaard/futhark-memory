@@ -2,12 +2,15 @@
 -- https://github.com/kkushagra/rodinia/blob/master/openmp/nw
 --
 -- ==
--- compiled script input { mk_input 4198401i64 }
--- compiled script input { mk_input 67125249i64 }
--- compiled script input { mk_input 268468225i64 }
--- compiled script input { mk_input 1073807361i64 }
+-- compiled script input { mk_input 2048i64 }
+-- compiled script input { mk_input 4096i64 }
+-- compiled script input { mk_input 8192i64 }
+-- compiled script input { mk_input 16384i64 }
+-- compiled script input { mk_input 32768i64 }
 
-entry mk_input (len: i64) = (10i32, replicate len 0i32 , replicate len 0i32)
+entry mk_input (row_length: i64) =
+  let n = (row_length + 1)**2
+  in (10i32, replicate n 0i32 , replicate n 0i32)
 
 import "intrinsics"
 
