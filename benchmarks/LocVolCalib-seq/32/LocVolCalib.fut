@@ -8,7 +8,6 @@
 --
 -- compiled input @ data/large.in
 -- output @ data/large.out
--- compiled input @ data/huge.in
 
 def initGrid (s0: f32) (alpha: f32) (nu: f32) (t: f32) (numX: i64) (numY: i64) (numT: i64)
   : (i32, i32, [numX]f32, [numY]f32, [numT]f32) =

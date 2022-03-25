@@ -8,8 +8,6 @@
 --
 -- compiled input @ OptionPricing-data/large.in
 -- output @ OptionPricing-data/large.out
--- compiled input @ OptionPricing-data/huge.in
--- compiled input @ OptionPricing-data/gargantuan.in
 
 let grayCode(x: i32): i32 = (x >> 1) ^ x
 

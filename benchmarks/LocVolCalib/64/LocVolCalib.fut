@@ -3,7 +3,6 @@
 -- compiled input @ LocVolCalib-data/small.in
 -- compiled input @ LocVolCalib-data/medium.in
 -- compiled input @ LocVolCalib-data/large.in
--- compiled input @ LocVolCalib-data/huge.in
 
 let initGrid (s0: f64) (alpha: f64) (nu: f64) (t: f64) (numX: i64) (numY: i64) (numT: i64)
   : (i32, i32, [numX]f64, [numY]f64, [numT]f64) =

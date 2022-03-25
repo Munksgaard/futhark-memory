@@ -30,21 +30,5 @@ results.json:
 	  | jq -s '.[0] + .[1]' - $@ \
 	  | sponge $@
 
-	for i in $(shell seq 0 $(RUNS)); do make -C $(BENCH_DIR) run_huge; done \
-	  | grep "Runtime in micro" \
-	  | tail -n +2 \
-	  | cut -f 1 \
-	  | jq -nR '{"OptionPricing-data/huge.in": { "runtimes": [inputs | select(length>0) | tonumber]}}' \
-	  | jq -s '.[0] + .[1]' - $@ \
-	  | sponge $@
-
-	for i in $(shell seq 0 $(RUNS)); do make -C $(BENCH_DIR) run_gargantuan; done \
-	  | grep "Runtime in micro" \
-	  | tail -n +2 \
-	  | cut -f 1 \
-	  | jq -nR '{"OptionPricing-data/gargantuan.in": { "runtimes": [inputs | select(length>0) | tonumber]}}' \
-	  | jq -s '.[0] + .[1]' - $@ \
-	  | sponge $@
-
 clean:
 	rm -f results.json
