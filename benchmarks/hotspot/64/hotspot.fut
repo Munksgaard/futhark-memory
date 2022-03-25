@@ -2,10 +2,10 @@
 -- https://github.com/kkushagra/rodinia/blob/master/openmp/hotspot/hotspot_openmp.cpp
 --
 -- ==
--- random compiled input { 360i32 [2048][2048]f64 [2048][2048]f64 }
--- random compiled input { 360i32 [4096][4096]f64 [4096][4096]f64 }
--- random compiled input { 360i32 [8192][8192]f64 [8192][8192]f64 }
--- random compiled input { 360i32 [16384][16384]f64 [16384][16384]f64 }
+-- random compiled input { 10i32 [2048][2048]f64 [2048][2048]f64 }
+-- random compiled input { 10i32 [4096][4096]f64 [4096][4096]f64 }
+-- random compiled input { 10i32 [8192][8192]f64 [8192][8192]f64 }
+-- random compiled input { 10i32 [16384][16384]f64 [16384][16384]f64 }
 -- structure gpu-mem { Alloc 11 }
 
 -- Maximum power density possible (say 300W for a 10mm x 10mm chip)
