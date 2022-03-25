@@ -11,7 +11,7 @@ entry mk_input (len: i64) = (10i32, replicate len 0i32 , replicate len 0i32)
 
 import "intrinsics"
 
-let mkVal [bp1][b] (y:i32) (x:i32) (pen:i32) (block:[bp1][bp1]i32) (ref:[b][b]i32) : i32 =
+let mkVal [bp1][b] (y:i32) (x:i32) (pen:i32) (block:[bp1][]i32) (ref:[b][b]i32) : i32 =
   #[unsafe]
   i32.max (block[y, x - 1] - pen) (block[y - 1, x] - pen)
   |> i32.max (block[y - 1, x - 1] + ref[y - 1, x - 1])
@@ -21,9 +21,13 @@ let process_block [b][bp1]
                   (above: [bp1]i32)
                   (left: [b]i32)
                   (ref: [b][b]i32): *[b][b]i32 =
-  let block = assert (b + 1 == bp1) (tabulate_2d bp1 bp1 (\_ _ -> 0))
-  let block[0, 0:] = above
+  let block = assert (b + 1 == bp1) (tabulate_2d bp1 (bp1+1) (\_ _ -> 0))
+  let block[0, 0:bp1] = above
   let block[1:, 0] = left
+
+  let ref_block = copy (opaque ref)
+  let ref_block[0,0] = opaque ref_block[0,0]
+  let ref = ref_block
 
   -- Process the first half (anti-diagonally) of the block
   let block =
@@ -64,16 +68,17 @@ let process_block [b][bp1]
                          in  v ))
         in scatter_2d block inds vals
 
-  in block[1:, 1:] :> *[b][b]i32
+  in block[1:, 1:bp1] :> *[b][b]i32
 
 def main [n]
          (penalty: i32)
          (input: *[n]i32)
          (refs: [n]i32)
          : *[n]i32 =
-  let block_size = 64i64
+  let block_size = 64
   let row_length = i64.f64 <| f64.sqrt <| f64.i64 n
-  let num_blocks = assert ((row_length - 1) % block_size == 0) ((row_length - 1) / block_size)
+  let num_blocks = assert ((row_length - 1) % block_size == 0)
+                          ((assert (row_length > block_size * 3) row_length - 1) / block_size)
   let bp1 = assert (row_length > 3) (assert (2 * block_size < row_length) (block_size + 1))
 
   let input =
