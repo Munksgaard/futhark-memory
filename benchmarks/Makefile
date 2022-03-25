@@ -1,4 +1,4 @@
-BENCHMARKS = lud bfast hotspot lbm LocVolCalib LocVolCalib-seq OptionPricing
+BENCHMARKS = lud bfast hotspot lbm LocVolCalib LocVolCalib-seq OptionPricing nw
 
 .PHONY: all
 all:
