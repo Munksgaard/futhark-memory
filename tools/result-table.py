@@ -18,25 +18,29 @@ def compare(name, reference, plain_json, mrg_json, short_json, combined_json):
     print("""
 \\begin{{table}}[!t]
   \\renewcommand{{\\arraystretch}}{{1.3}}
-  \\caption{{{name} Runtime in Microseconds}}
+  \\caption{{{name} Runtime in Milliseconds}}
   \\label{{tab:{name}-performance-32}}
   \\centering
-  \\begin{{tabular}}{{c||c||c||c}}
+  \\begin{{tabular}}{{c||c||c||c||c}}
     \\hline
-    \\bfseries Dataset & \\bfseries Reference & \\bfseries Unoptimized Futhark & \\bfseries Optimized Futhark\\\\
+    \\bfseries Dataset & \\bfseries Reference & \\bfseries \\thead{{Unoptimized \\\\ Futhark}} & \\bfseries \\thead{{Optimized \\\\ Futhark}} & \\bfseries \\thead{{Optimization \\\\ Impact}}\\\\
     \\hline\\hline
 """.format(name = name))
 
     for dataset, results in plain_json.items():
         ref = np.mean(reference[dataset]["runtimes"])
-        print('    %% {name} & {reference} & {plain} & {combined} \\\\\n'
-              '    {name} & {reference}ms & {plain_speedup:.2f}x & {combined_speedup:.2f}x \\\\'
+        print('    %% {name} & {reference_us} & {plain_us} & {combined_us} & {impact}\\\\\n'
+              '    {name} & {reference:d}ms & {plain_speedup:.2f}x & {combined_speedup:.2f}x & {impact:.2f}x\\\\'
               .format(name = dataset,
-                      reference = ref,
-                      plain = np.mean(results["runtimes"]),
+                      reference = int(round(ref / 100)),
+                      reference_us = ref,
+                      plain = int(round(np.mean(results["runtimes"]) / 1000)),
+                      plain_us = np.mean(results["runtimes"]),
                       plain_speedup = ref / np.mean(results["runtimes"]),
-                      combined = np.mean(combined_json[dataset]["runtimes"]),
-                      combined_speedup = ref / np.mean(combined_json[dataset]["runtimes"])))
+                      combined = int(round(np.mean(combined_json[dataset]["runtimes"]) / 1000)),
+                      combined_us = np.mean(combined_json[dataset]["runtimes"]),
+                      combined_speedup = ref / np.mean(combined_json[dataset]["runtimes"]),
+                      impact = np.mean(results["runtimes"]) / np.mean(combined_json[dataset]["runtimes"])))
 
     print("""
     \\hline
