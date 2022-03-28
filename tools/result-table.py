@@ -8,7 +8,14 @@ import textwrap
 import json
 import sys
 import numpy as np
+import re
 from collections import OrderedDict
+
+def canonical_name(name):
+    try:
+        return str(max(list(map(int, re.findall(r'\d+', name)))))
+    except:
+        return list(filter(lambda x: x, name.split("/")))[-1]
 
 def compare(name, reference, plain_json, mrg_json, short_json, combined_json):
     speedups = {}
@@ -18,20 +25,22 @@ def compare(name, reference, plain_json, mrg_json, short_json, combined_json):
     print("""
 \\begin{{table}}[!t]
   \\renewcommand{{\\arraystretch}}{{1.3}}
-  \\caption{{{name} Runtime in Milliseconds}}
+  \\caption{{{name} Performance}}
   \\label{{tab:{name}-performance-32}}
   \\centering
-  \\begin{{tabular}}{{c||c||c||c||c}}
+  \\begin{{tabular}}{{c||c||c||c||c||c}}
     \\hline
-    \\bfseries Dataset & \\bfseries Reference & \\bfseries \\thead{{Unoptimized \\\\ Futhark}} & \\bfseries \\thead{{Optimized \\\\ Futhark}} & \\bfseries \\thead{{Optimization \\\\ Impact}}\\\\
+    \\bfseries Dataset & \\bfseries Reference & \\bfseries \\thead{{Unopt. \\\\ Futhark}} & \\bfseries \\thead{{Opt. \\\\ Futhark}} & \\bfseries \\thead{{Opt. \\\\ Impact}} & \\bfseries Mem \\\\
     \\hline\\hline
 """.format(name = name))
 
     for dataset, results in plain_json.items():
+        pretty_name = canonical_name(dataset)
+
         ref = np.mean(reference[dataset]["runtimes"])
         print('    %% {name} & {reference_us} & {plain_us} & {combined_us} & {impact}\\\\\n'
-              '    {name} & {reference:d}ms & {plain_speedup:.2f}x & {combined_speedup:.2f}x & {impact:.2f}x\\\\'
-              .format(name = dataset,
+              '    {name} & {reference:d}ms & {plain_speedup:.2f}x & {combined_speedup:.2f}x & {impact:.2f}x & {mem:+.0f}\\% \\\\'
+              .format(name = pretty_name,
                       reference = int(round(ref / 100)),
                       reference_us = ref,
                       plain = int(round(np.mean(results["runtimes"]) / 1000)),
@@ -40,7 +49,8 @@ def compare(name, reference, plain_json, mrg_json, short_json, combined_json):
                       combined = int(round(np.mean(combined_json[dataset]["runtimes"]) / 1000)),
                       combined_us = np.mean(combined_json[dataset]["runtimes"]),
                       combined_speedup = ref / np.mean(combined_json[dataset]["runtimes"]),
-                      impact = np.mean(results["runtimes"]) / np.mean(combined_json[dataset]["runtimes"])))
+                      impact = np.mean(results["runtimes"]) / np.mean(combined_json[dataset]["runtimes"]),
+                      mem = 100 - results["bytes"] / combined_json[dataset]["bytes"]  * 100))
 
     print("""
     \\hline
@@ -73,6 +83,6 @@ if __name__ == '__main__':
     with open(bench + '/' + bits + '/short-circuiting.json') as f:
         combined_json = json.load(f)
 
-    name = bench.split("/")[-1]
+    name = list(filter(lambda x: x, bench.split("/")))[-1]
 
     compare(name, reference, plain_json, mrg_json, short_json, combined_json)
