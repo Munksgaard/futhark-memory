@@ -1,5 +1,5 @@
 FUTHARK ?= futhark
-RUNS ?= 10
+RUNS ?= 1000
 
 BENCHMARK ?= nw.fut
 
