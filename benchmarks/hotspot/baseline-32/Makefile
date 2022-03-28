@@ -1,5 +1,5 @@
 CC = gcc
-CC_FLAGS = -g -O3 -Wall
+CC_FLAGS = -g -O3 -Wall -std=c99
 
 RUNS ?= 10
 
