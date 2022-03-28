@@ -219,7 +219,8 @@ let gather [n][s] (grid_2d: *[n][s]f32): *[n][s]f32  =
   transpose gathered
 
 
-let main_helper [f] (grid_init: *[f]f32) (steps: i64): *[f]f32 =
+let main [f] (steps: i64) (grid_init: *[f]f32): *[f]f32 =
+  #[unsafe]
    let grid_2d = unflatten N_CELL_ENTRIES TOTAL_PADDED_CELLS grid_init
    let first_collide = collide grid_2d
    let looped =
@@ -230,7 +231,5 @@ let main_helper [f] (grid_init: *[f]f32) (steps: i64): *[f]f32 =
 
 --Benchmark
 -- ==
--- compiled input @ ../data/f32.data
-
-def main [s] (input: *[s]f32): *[s]f32 =
-  main_helper input 3000
+-- compiled input @ ../data/short.data
+-- compiled input @ ../data/long.data
