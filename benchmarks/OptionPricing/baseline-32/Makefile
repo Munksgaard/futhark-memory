@@ -1,4 +1,4 @@
-RUNS ?= 10
+RUNS ?= 1000
 
 EXTERNALS_DIR = ../../../externals
 FINPAR_DIR = $(EXTERNALS_DIR)/finpar
