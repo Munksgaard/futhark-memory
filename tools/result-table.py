@@ -25,14 +25,15 @@ def compare(name, reference, plain_json, mrg_json, short_json, combined_json):
     print("""
 \\begin{{table}}[!t]
   \\renewcommand{{\\arraystretch}}{{1.3}}
-  \\caption{{{name} Performance}}
+  \\caption{{{name} Performance ({num} runs)}}
   \\label{{tab:{name}-performance-32}}
   \\centering
   \\begin{{tabular}}{{c||c||c||c||c||c}}
     \\hline
     \\bfseries Dataset & \\bfseries Reference & \\bfseries \\thead{{Unopt. \\\\ Futhark}} & \\bfseries \\thead{{Opt. \\\\ Futhark}} & \\bfseries \\thead{{Opt. \\\\ Impact}} & \\bfseries Mem \\\\
     \\hline\\hline
-""".format(name = name))
+""".format(name = name,
+           num = len(list(plain_json.values())[0]["runtimes"])))
 
     for dataset, results in plain_json.items():
         pretty_name = canonical_name(dataset)
