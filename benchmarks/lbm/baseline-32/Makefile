@@ -1,4 +1,4 @@
-RUNS ?= 10
+RUNS ?= 100
 
 EXTERNALS_DIR = ../../../externals
 PARBOIL_DIR = $(EXTERNALS_DIR)/parboil

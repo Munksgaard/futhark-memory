@@ -1,5 +1,5 @@
 FUTHARK ?= futhark
-RUNS ?= 10
+RUNS ?= 100
 
 BENCHMARK ?= lbm.fut
 
