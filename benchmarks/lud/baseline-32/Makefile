@@ -32,4 +32,4 @@ lud: lud.cpp common.c common.h
 	$(CC) $(CC_FLAGS) -o $@ lud.cpp common.c -lOpenCL
 
 clean:
-	rm -f lud
+	rm -f lud results.json

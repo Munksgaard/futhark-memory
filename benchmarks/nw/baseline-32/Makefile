@@ -38,4 +38,4 @@ $(EXE): nw.c
 	$(CC) ${KERNEL_DIM} $(CC_FLAGS) -o $(EXE) nw.c -lOpenCL -std=c11
 
 clean:
-	rm -f $(EXE)
+	rm -f $(EXE) results.json
