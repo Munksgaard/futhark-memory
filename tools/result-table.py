@@ -42,7 +42,7 @@ def compare(name, reference, plain_json, mrg_json, short_json, combined_json):
         print('    %% {name} & {reference_us} & {plain_us} & {combined_us} & {impact}\\\\\n'
               '    {name} & {reference:d}ms & {plain_speedup:.2f}x & {combined_speedup:.2f}x & {impact:.2f}x & {mem:+.0f}\\% \\\\'
               .format(name = pretty_name,
-                      reference = int(round(ref / 100)),
+                      reference = int(round(ref / 1000)),
                       reference_us = ref,
                       plain = int(round(np.mean(results["runtimes"]) / 1000)),
                       plain_us = np.mean(results["runtimes"]),
