@@ -96,9 +96,13 @@ def lud_perimeter_lower [b][m] (diag: [b][b]f32) (mat: [m][b][b]f32): *[m][b][b]
 
 def lud_internal [m][b] (top_per: [m][b][b]f32) (lft_per: [m][b][b]f32) (mat_slice: [m][m][b][b]f32): *[m][m][b][b]f32 =
   let top_slice = map transpose top_per in
+  #[incremental_flattening(only_inner)]
   map2 (\mat_arr lft ->
+        #[incremental_flattening(only_inner)]
         map2 (\mat_blk top ->
+                #[incremental_flattening(only_inner)]
                 map2 (\mat_row lft_row ->
+                        #[sequential_inner]
                         map2 (\mat_el top_row ->
                                 let prods = map2 (*) lft_row top_row
                                 let sum = f32.sum prods
@@ -110,10 +114,7 @@ def lud_internal [m][b] (top_per: [m][b][b]f32) (lft_per: [m][b][b]f32) (mat_sli
 
 def main [num_blocks] (matb: *[num_blocks][num_blocks][32][32]f32): *[num_blocks][num_blocks][32][32]f32 =
     #[unsafe]
-    let b = block_size
-    let n = b * num_blocks
-
-    let matb = loop matb for step < (n / b) - 1 do
+    let matb = loop matb for step < num_blocks - 1 do
         -- 1. compute the current diagonal block
         let diag = lud_diagonal matb[step,step] in
 
@@ -123,7 +124,7 @@ def main [num_blocks] (matb: *[num_blocks][num_blocks][32][32]f32): *[num_blocks
 
         -- 3. compute the left perimeter and update matrix
         let col_slice = matb[step+1:num_blocks,step]
-        let lft_per_irreg = lud_perimeter_lower diag col_slice
+        let lft_per_irreg = lud_perimeter_lower diag col_slice |> opaque
 
         -- 4. compute the internal blocks
         let inner_slice = matb[step+1:num_blocks,step+1:num_blocks]
@@ -136,7 +137,7 @@ def main [num_blocks] (matb: *[num_blocks][num_blocks][32][32]f32): *[num_blocks
         let matb[step+1:num_blocks, step+1:num_blocks] = internal
         in matb
 
-    let last_step = (n / b) - 1 in
+    let last_step = num_blocks - 1 in
     let matb[last_step,last_step] =
       lud_diagonal matb[last_step, last_step]
 
