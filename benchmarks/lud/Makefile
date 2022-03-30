@@ -7,3 +7,7 @@ all:
 clean:
 	$(MAKE) -C 32 clean
 	$(MAKE) -C baseline-32 clean
+
+.PHONY: clean-futhark
+clean-futhark:
+	$(MAKE) -C 32 clean
