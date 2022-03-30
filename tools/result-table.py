@@ -30,7 +30,7 @@ def compare(name, reference, plain_json, mrg_json, short_json, combined_json):
   \\centering
   \\begin{{tabular}}{{c||c||c||c||c||c}}
     \\hline
-    \\bfseries Dataset & \\bfseries Reference & \\bfseries \\thead{{Unopt. \\\\ Futhark}} & \\bfseries \\thead{{Opt. \\\\ Futhark}} & \\bfseries \\thead{{Opt. \\\\ Impact}} & \\bfseries Mem \\\\
+    \\bfseries Dataset & \\bfseries Reference & \\bfseries \\thead{{Unopt. \\\\ Futhark}} & \\bfseries \\thead{{Opt. \\\\ Futhark}} & \\bfseries \\thead{{Opt. \\\\ Impact}} & \\bfseries \\thead{{Mem. \\\\ Red. }} \\\\
     \\hline\\hline
 """.format(name = name,
            num = len(list(plain_json.values())[0]["runtimes"])))
@@ -40,7 +40,7 @@ def compare(name, reference, plain_json, mrg_json, short_json, combined_json):
 
         ref = np.mean(reference[dataset]["runtimes"])
         print('    %% {name} & {reference_us} & {plain_us} & {combined_us} & {impact}\\\\\n'
-              '    {name} & {reference:d}ms & {plain_speedup:.2f}x & {combined_speedup:.2f}x & {impact:.2f}x & {mem:+.0f}\\% \\\\'
+              '    {name} & {reference:d}ms & {plain_speedup:.2f}x & {combined_speedup:.2f}x & {impact:.2f}x & {mem:.0f}\\% \\\\'
               .format(name = pretty_name,
                       reference = int(round(ref / 1000)),
                       reference_us = ref,
@@ -51,7 +51,7 @@ def compare(name, reference, plain_json, mrg_json, short_json, combined_json):
                       combined_us = np.mean(combined_json[dataset]["runtimes"]),
                       combined_speedup = ref / np.mean(combined_json[dataset]["runtimes"]),
                       impact = np.mean(results["runtimes"]) / np.mean(combined_json[dataset]["runtimes"]),
-                      mem = 100 - results["bytes"] / combined_json[dataset]["bytes"]  * 100))
+                      mem = combined_json[dataset]["bytes"] / results["bytes"] * 100))
 
     print("""
     \\hline
