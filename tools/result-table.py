@@ -51,7 +51,7 @@ def compare(name, reference, plain_json, mrg_json, short_json, combined_json):
                       combined_us = np.mean(combined_json[dataset]["runtimes"]),
                       combined_speedup = ref / np.mean(combined_json[dataset]["runtimes"]),
                       impact = np.mean(results["runtimes"]) / np.mean(combined_json[dataset]["runtimes"]),
-                      mem = combined_json[dataset]["bytes"] / results["bytes"] * 100))
+                      mem = (1 - combined_json[dataset]["bytes"] / results["bytes"]) * 100))
 
     print("""
     \\hline
