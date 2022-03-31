@@ -17,7 +17,7 @@ def canonical_name(name):
     except:
         return list(filter(lambda x: x, name.split("/")))[-1]
 
-def compare(name, reference, plain_json, mrg_json, short_json, combined_json):
+def compare(name, reference, plain_json, combined_json):
     speedups = {}
 
     maxlen = max(map(lambda x: len(x), list(plain_json.keys())))
@@ -75,15 +75,9 @@ if __name__ == '__main__':
     with open(bench + '/' + bits + '/plain.json') as f:
         plain_json = json.load(f)
 
-    with open(bench + '/' + bits + '/memory-block-merging.json') as f:
-        mrg_json = json.load(f)
-
-    with open(bench + '/' + bits + '/short-circuiting-no-merge.json') as f:
-        short_json = json.load(f)
-
     with open(bench + '/' + bits + '/short-circuiting.json') as f:
         combined_json = json.load(f)
 
     name = list(filter(lambda x: x, bench.split("/")))[-1]
 
-    compare(name, reference, plain_json, mrg_json, short_json, combined_json)
+    compare(name, reference, plain_json, combined_json)
