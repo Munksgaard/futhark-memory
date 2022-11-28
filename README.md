@@ -1,5 +1,9 @@
 # futhark-memory
 
+## DEPRECATION NOTICE
+
+This repo is deprecated in favor of https://github.com/diku-dk/futhark-mem-sc22.
+
 ## How to save results of benchmark run
 
 ```
